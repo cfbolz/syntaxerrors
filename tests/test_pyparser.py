@@ -1,19 +1,22 @@
 import os
 
+import pytest
+
 from syntaxerrors import pyparse
 from syntaxerrors.parser import MultipleParseError
 
-parentdir = os.path.dirname(os.path.dirname(__file__))
+srcdir = os.path.dirname(pyparse.__file__)
 
 def test_simple():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     st = p.parse_source("x = 1\n", info)
 
-def test_parse():
+def test_parse_all():
     # smoke test
-    for fn in os.listdir(parentdir):
+    for fn in os.listdir(srcdir):
         if fn.endswith(".py"):
+            fn = os.path.join(srcdir, fn)
             with open(fn) as f:
                 s = f.read()
             info = pyparse.CompileInfo(fn, "exec")
@@ -133,6 +136,7 @@ if a
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 7]
 
+@pytest.mark.xfail
 def test_lambda_with_newlines():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
