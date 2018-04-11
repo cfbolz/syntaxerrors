@@ -1,7 +1,7 @@
 import pytest
-from pypy.interpreter.pyparser import pytokenizer
-from pypy.interpreter.pyparser.pygram import tokens
-from pypy.interpreter.pyparser.error import TokenError
+from syntaxerrors import pytokenizer
+from syntaxerrors.pytoken import tokens
+from syntaxerrors.error import TokenError
 
 def tokenize(s):
     return pytokenizer.generate_tokens(s.splitlines(True) + ["\n"], 0)
