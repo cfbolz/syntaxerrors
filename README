@@ -1,0 +1,9 @@
+Playing around with a Python parser that can recover from errors.
+
+Algorithm from "Repairing syntax errors in LR parsers", Antonio Ruiz-Cortés & Miguel Toro
+
+LICENSE
+========
+
+all code is under MIT License, copied and changed from PyPy (see there, for
+license, copyright and contributors).
