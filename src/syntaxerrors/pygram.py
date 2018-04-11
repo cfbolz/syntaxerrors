@@ -1,5 +1,8 @@
 import os
-from syntaxerrors import parser, pytoken, metaparser
+import io
+from syntaxerrors import parser, pytoken
+
+from syntaxerrors.pytoken import tokens
 
 class PythonGrammar(parser.Grammar):
 
@@ -8,8 +11,9 @@ class PythonGrammar(parser.Grammar):
     OPERATOR_MAP = pytoken.python_opmap
 
 def _get_python_grammar():
+    from syntaxerrors import metaparser
     here = os.path.dirname(__file__)
-    fp = open(os.path.join(here, "data", "Grammar2.7"))
+    fp = io.open(os.path.join(here, "data", "Grammar2.7"), "rb")
     try:
         gram_source = fp.read()
     finally:
@@ -23,19 +27,14 @@ python_grammar_no_print = python_grammar.shared_copy()
 python_grammar_no_print.keyword_ids = python_grammar_no_print.keyword_ids.copy()
 del python_grammar_no_print.keyword_ids["print"]
 
-class _Tokens(object):
-    pass
-for tok_name, idx in pytoken.python_tokens.iteritems():
-    setattr(_Tokens, tok_name, idx)
-tokens = _Tokens()
 
 class _Symbols(object):
     pass
 rev_lookup = {}
-for sym_name, idx in python_grammar.symbol_ids.iteritems():
+for sym_name, idx in python_grammar.symbol_ids.items():
     setattr(_Symbols, sym_name, idx)
     rev_lookup[idx] = sym_name
 syms = _Symbols()
 syms._rev_lookup = rev_lookup # for debugging
 
-del _get_python_grammar, _Tokens, tok_name, sym_name, idx
+del _get_python_grammar,  sym_name, idx

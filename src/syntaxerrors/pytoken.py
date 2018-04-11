@@ -3,6 +3,8 @@
 python_tokens = {}
 python_opmap = {}
 
+tok_name = [None] * 256
+
 def _add_tok(name, *values):
     index = len(python_tokens)
     assert index < 256
@@ -69,3 +71,12 @@ _add_tok("COMMENT")
 _add_tok("NL")
 
 del _add_tok
+
+class _Tokens(object):
+    pass
+for name, idx in python_tokens.items():
+    setattr(_Tokens, name, idx)
+    tok_name[idx] = name
+tokens = _Tokens()
+
+del _Tokens, name
