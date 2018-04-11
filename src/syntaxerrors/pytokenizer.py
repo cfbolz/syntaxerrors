@@ -1,10 +1,10 @@
-from pypy.interpreter.pyparser import automata
-from pypy.interpreter.pyparser.pygram import tokens
-from pypy.interpreter.pyparser.pytoken import python_opmap
-from pypy.interpreter.pyparser.error import TokenError, TokenIndentationError
-from pypy.interpreter.pyparser.pytokenize import tabsize, whiteSpaceDFA, \
+from syntaxerrors import automata
+from syntaxerrors.pygram import tokens
+from syntaxerrors.pytoken import python_opmap
+from syntaxerrors.error import TokenError, TokenIndentationError
+from syntaxerrors.pytokenize import tabsize, whiteSpaceDFA, \
     triple_quoted, endDFAs, single_quoted, pseudoDFA
-from pypy.interpreter.astcompiler import consts
+from syntaxerrors import astconsts
 
 NAMECHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'
 NUMCHARS = '0123456789'
@@ -249,7 +249,7 @@ def generate_tokens(lines, flags):
                 pos = pos + 1
 
     lnum -= 1
-    if not (flags & consts.PyCF_DONT_IMPLY_DEDENT):
+    if not (flags & astconsts.PyCF_DONT_IMPLY_DEDENT):
         if token_list and token_list[-1][0] != tokens.NEWLINE:
             tok = (tokens.NEWLINE, '', lnum, 0, '\n')
             token_list.append(tok)

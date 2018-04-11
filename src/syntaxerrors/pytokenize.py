@@ -16,7 +16,7 @@ $Id: pytokenize.py,v 1.3 2003/10/03 16:31:53 jriehl Exp $
 """
 # ______________________________________________________________________
 
-from pypy.interpreter.pyparser import automata
+from syntaxerrors import automata
 
 __all__ = [ "tokenize" ]
 

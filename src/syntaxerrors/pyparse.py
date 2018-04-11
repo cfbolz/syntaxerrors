@@ -1,14 +1,12 @@
-from pypy.interpreter.error import OperationError
-from pypy.interpreter.pyparser import future, parser, pytokenizer, pygram, error
-from pypy.interpreter.astcompiler import consts
+from syntaxerrors import parsefuture, parser, pytokenizer, pygram, error
+from syntaxerrors import astconsts
 
-def recode_to_utf8(space, bytes, encoding):
-    w_text = space.call_method(space.newbytes(bytes), "decode",
-                               space.newtext(encoding))
-    if not space.isinstance_w(w_text, space.w_unicode):
+def recode_to_utf8(bytes, encoding):
+    text = bytes.decode(encoding)
+    if not isinstance(text, unicode):
         raise error.SyntaxError("codec did not return a unicode object")
-    w_recoded = space.call_method(w_text, "encode", space.newtext("utf-8"))
-    return space.bytes_w(w_recoded)
+    recoded = text.encode("utf-8")
+    return recoded
 
 def _normalize_encoding(encoding):
     """returns normalized name for <encoding>
@@ -86,10 +84,9 @@ _targets = {
 
 class PythonParser(parser.Parser):
 
-    def __init__(self, space, future_flags=future.futureFlags_2_7,
+    def __init__(self, future_flags=parsefuture.futureFlags_2_7,
                  grammar=pygram.python_grammar):
         parser.Parser.__init__(self, grammar)
-        self.space = space
         self.future_flags = future_flags
 
     def parse_source(self, textsrc, compile_info):
@@ -108,7 +105,7 @@ class PythonParser(parser.Parser):
             if decl_enc and decl_enc != "utf-8":
                 raise error.SyntaxError("UTF-8 BOM with %s coding cookie" % decl_enc,
                                         filename=compile_info.filename)
-        elif compile_info.flags & consts.PyCF_SOURCE_IS_UTF8:
+        elif compile_info.flags & astconsts.PyCF_SOURCE_IS_UTF8:
             enc = 'utf-8'
             if _check_for_encoding(textsrc) is not None:
                 raise error.SyntaxError("coding declaration in unicode string",
@@ -116,22 +113,16 @@ class PythonParser(parser.Parser):
         else:
             enc = _normalize_encoding(_check_for_encoding(textsrc))
             if enc is not None and enc not in ('utf-8', 'iso-8859-1'):
-                try:
-                    textsrc = recode_to_utf8(self.space, textsrc, enc)
-                except OperationError as e:
-                    # if the codec is not found, LookupError is raised.  we
-                    # check using 'is_w' not to mask potential IndexError or
-                    # KeyError
-                    space = self.space
-                    if e.match(space, space.w_LookupError):
-                        raise error.SyntaxError("Unknown encoding: %s" % enc,
-                                                filename=compile_info.filename)
+                textsrc = recode_to_utf8(textsrc, enc) # XXX can raise LookupError?
+                    #if e.match(space, space.w_LookupError):
+                    #    raise error.SyntaxError("Unknown encoding: %s" % enc,
+                    #                            filename=compile_info.filename)
                     # Transform unicode errors into SyntaxError
-                    if e.match(space, space.w_UnicodeDecodeError):
-                        e.normalize_exception(space)
-                        w_message = space.str(e.get_w_value(space))
-                        raise error.SyntaxError(space.text_w(w_message))
-                    raise
+                    #if e.match(space, space.w_UnicodeDecodeError):
+                    #    e.normalize_exception(space)
+                    #    w_message = space.str(e.get_w_value(space))
+                    #    raise error.SyntaxError(space.text_w(w_message))
+                    #raise
         if enc is not None:
             compile_info.encoding = enc
         return self._parse(textsrc, compile_info)
@@ -144,7 +135,7 @@ class PythonParser(parser.Parser):
         if source_lines and not source_lines[-1].endswith("\n"):
             source_lines[-1] += '\n'
         if textsrc and textsrc[-1] == "\n":
-            flags &= ~consts.PyCF_DONT_IMPLY_DEDENT
+            flags &= ~astconsts.PyCF_DONT_IMPLY_DEDENT
 
         self.prepare(_targets[compile_info.mode])
         tp = 0
@@ -154,27 +145,27 @@ class PythonParser(parser.Parser):
                 # which is expected to work independently of them.  It's
                 # certainly the case for all futures in Python <= 2.7.
                 tokens = pytokenizer.generate_tokens(source_lines, flags)
-
-                newflags, last_future_import = (
-                    future.add_future_flags(self.future_flags, tokens))
-                compile_info.last_future_import = last_future_import
-                compile_info.flags |= newflags
-
-                if compile_info.flags & consts.CO_FUTURE_PRINT_FUNCTION:
-                    self.grammar = pygram.python_grammar_no_print
-                else:
-                    self.grammar = pygram.python_grammar
-
-                for tp, value, lineno, column, line in tokens:
-                    if self.add_token(tp, value, lineno, column, line):
-                        break
             except error.TokenError as e:
                 e.filename = compile_info.filename
                 raise
             except error.TokenIndentationError as e:
                 e.filename = compile_info.filename
                 raise
+
+            newflags, last_future_import = (
+                parsefuture.add_future_flags(self.future_flags, tokens))
+            compile_info.last_future_import = last_future_import
+            compile_info.flags |= newflags
+
+            if compile_info.flags & astconsts.CO_FUTURE_PRINT_FUNCTION:
+                self.grammar = pygram.python_grammar_no_print
+            else:
+                self.grammar = pygram.python_grammar
+
+            try:
+                self.add_tokens(tokens)
             except parser.ParseError as e:
+                raise
                 # Catch parse errors, pretty them up and reraise them as a
                 # SyntaxError.
                 new_err = error.IndentationError
@@ -196,3 +187,34 @@ class PythonParser(parser.Parser):
             # Avoid hanging onto the tree.
             self.root = None
         return tree
+
+def format_messages(e):
+    if isinstance(e, parser.SingleParseError):
+        return format_single(e)
+    result = []
+    for i, error in enumerate(e.errors):
+        if i == 1:
+            result.append("\n___\nThere were possibly further errors, but they are guesses:\n"
+                          "(This is an experimental feature! if the errors are nonsense, please report a bug!)")
+        result.append(format_single(error))
+    return "\n\n".join(result) + "\n"
+
+def format_single(e):
+    # format message
+    line = e.line
+    caret = " " * e.column + "^"
+    if e.token_type == pygram.tokens.INDENT:
+        msg = "unexpected indent"
+    elif e.expected == pygram.tokens.INDENT:
+        msg = "expected an indented block"
+    else:
+        msg = "invalid syntax"
+        if e.expected_str is not None:
+            msg += " (expected '%s')" % e.expected_str
+
+    lineno = None
+    if type(e.lineno) is int:
+        lineno = 'line %d' % (e.lineno,)
+    if lineno:
+        msg = "%s (%s)" % (msg, lineno)
+    return line + caret + "\n" + msg

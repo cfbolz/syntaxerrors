@@ -11,16 +11,6 @@ class SyntaxError(Exception):
         self.filename = filename
         self.lastlineno = lastlineno
 
-    def wrap_info(self, space):
-        w_filename = space.newtext_or_none(self.filename)
-        w_text = space.newtext_or_none(self.text)
-        return space.newtuple([space.newtext(self.msg),
-                               space.newtuple([w_filename,
-                                               space.newint(self.lineno),
-                                               space.newint(self.offset),
-                                               w_text,
-                                               space.newint(self.lastlineno)])])
-
     def __str__(self):
         return "%s at pos (%d, %d) in %r" % (self.__class__.__name__,
                                              self.lineno,

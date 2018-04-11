@@ -1,4 +1,4 @@
-from pypy.tool import stdlib___future__ as future
+import __future__ as future
 
 class FutureFlags(object):
 
@@ -50,7 +50,7 @@ class TokenIterator:
             return False
 
     def skip_name(self, name):
-        from pypy.interpreter.pyparser import pygram
+        from syntaxerrors import pygram
         if self.tok[0] == pygram.tokens.NAME and self.tok[1] == name:
             self.next()
             return True
@@ -58,7 +58,7 @@ class TokenIterator:
             return False
 
     def next_feature_name(self):
-        from pypy.interpreter.pyparser import pygram
+        from syntaxerrors import pygram
         if self.tok[0] == pygram.tokens.NAME:
             name = self.tok[1]
             self.next()
@@ -69,13 +69,13 @@ class TokenIterator:
             return ''
 
     def skip_newlines(self):
-        from pypy.interpreter.pyparser import pygram
+        from syntaxerrors import pygram
         while self.skip(pygram.tokens.NEWLINE):
             pass
 
 
 def add_future_flags(future_flags, tokens):
-    from pypy.interpreter.pyparser import pygram
+    from syntaxerrors import pygram
     it = TokenIterator(tokens)
     result = 0
     last_position = (0, 0)
