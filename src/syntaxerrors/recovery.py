@@ -25,6 +25,9 @@ class Repair(object):
         self.ninserts = ninserts
         self.ndeletes = ndeletes
 
+    def __repr__(self):
+        return "<Repair %s>" % (self.name, )
+
     def parses_successfully(self, grammar):
         stack = self.stack
         for i in range(self.index, min(len(self.tokens), self.index + SUCCESS_NUMBER_TOKENS)):
@@ -39,7 +42,6 @@ class Repair(object):
         return True
 
     def further_changes(self, grammar):
-
         # shift
         if self.nshifts < NUMBER_SHIFTS:
             token = self.tokens[self.index]
@@ -56,7 +58,7 @@ class Repair(object):
 
         # insert token
         if self.ndeletes < NUMBER_INSERTS:
-            for tp, value in find_fake_tp_value_pairs(grammar):
+            for tp, value in grammar.repair_fake_tokens():
                 token = tp, value, -1, -1, "fake line"
                 label_index = grammar.classify(token)
                 try:
@@ -65,13 +67,6 @@ class Repair(object):
                     continue
                 yield Repair(stack, self.tokens, self.index, self.name + 'i', self.nshifts, self.ninserts + 1, self.ndeletes)
 
-def find_fake_tp_value_pairs(grammar):
-    for tp in grammar.token_ids:
-        if tp == grammar.KEYWORD_TOKEN:
-            for value in grammar.keyword_ids:
-                yield tp, value
-        else:
-            yield tp, "fake"
 
 def initial_queue(stack, tokens, index):
     return [Repair(stack, tokens, index)]

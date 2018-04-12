@@ -194,3 +194,18 @@ if a
     except MultipleParseError as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 4]
+
+
+def test_genexp_tuple():
+    info = pyparse.CompileInfo("<string>", "exec")
+    p = pyparse.PythonParser()
+    try:
+        st = p.parse_source("""
+(a, b for a, b in zip([1, 2], [3, 4]))
+print 1
+if a
+    print 3
+""", info)
+    except MultipleParseError as e:
+        assert len(e.errors) == 2
+        assert [x.lineno for x in e.errors] == [2, 4]

@@ -16,6 +16,9 @@ class Grammar(object):
     the Parser.
     """
 
+    KEYWORD_TOKEN = -121212
+    never_generate_as_fake = set()
+
     def __init__(self):
         self.symbol_ids = {}
         self.symbol_names = {}
@@ -26,6 +29,7 @@ class Grammar(object):
         self.labels = [0]
         self.token_ids = {}
         self.start = -1
+        self._repair_fake_tokens = None
 
     def shared_copy(self):
         new = self.__class__()
@@ -49,6 +53,21 @@ class Grammar(object):
             raise ParseError("invalid token", token_type, value, lineno, column,
                              line)
         return label_index
+
+    def repair_fake_tokens(self):
+        if self._repair_fake_tokens:
+            return self._repair_fake_tokens
+        l = []
+        for tp in self.token_ids:
+            if tp in self.never_generate_as_fake:
+                continue
+            if tp == self.KEYWORD_TOKEN:
+                for value in self.keyword_ids:
+                    l.append((tp, value))
+            else:
+                l.append((tp, "fake"))
+        self._repair_fake_tokens = l
+        return l
 
 
 class DFA(object):
