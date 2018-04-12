@@ -181,3 +181,16 @@ if a
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 14]
 
+def test_genexp_keywordarg():
+    info = pyparse.CompileInfo("<string>", "exec")
+    p = pyparse.PythonParser()
+    try:
+        st = p.parse_source("""
+dict(a = i for i in range(10))
+print 1
+if a
+    print 3
+""", info)
+    except MultipleParseError as e:
+        assert len(e.errors) == 2
+        assert [x.lineno for x in e.errors] == [2, 4]
