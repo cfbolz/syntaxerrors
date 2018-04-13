@@ -62,7 +62,7 @@ global_stmt: 'global' NAME (',' NAME)*
 exec_stmt: 'exec' expr ['in' test [',' test]]
 assert_stmt: 'assert' test [',' test]
 
-compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated
+compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | fakesuite
 if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 while_stmt: 'while' test ':' suite ['else' ':' suite]
 for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
@@ -75,7 +75,10 @@ with_stmt: 'with' with_item (',' with_item)*  ':' suite
 with_item: test ['as' expr]
 # NB compile.c makes sure that the default except clause is last
 except_clause: 'except' [test [('as' | ',') test]]
+
+fakesuite: FAKESUITESTART NEWLINE INDENT stmt+ DEDENT
 suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
+
 
 # Backward compatibility cruft to support:
 # [ x for x in lambda: True, lambda: False if x() ]

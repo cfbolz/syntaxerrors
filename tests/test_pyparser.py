@@ -136,7 +136,6 @@ if a
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 7]
 
-@pytest.mark.xfail
 def test_lambda_with_newlines():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
@@ -153,7 +152,7 @@ if a
 """, info)
     except MultipleParseError as e:
         assert len(e.errors) == 2
-        assert [x.lineno for x in e.errors] == [4, 7]
+        assert [x.lineno for x in e.errors] == [2, 7]
 
 
 def test_missing_comma_list():

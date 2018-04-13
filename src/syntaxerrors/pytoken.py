@@ -70,6 +70,11 @@ _add_tok('ERRORTOKEN')
 _add_tok("COMMENT")
 _add_tok("NL")
 
+# extra recovery-specific tokens
+# those are never produced by the tokenizer, but the recovery algorithm can
+# insert it
+_add_tok("FAKESUITESTART") # behaves like: if 1: NEWLINE
+
 del _add_tok
 
 class _Tokens(object):
