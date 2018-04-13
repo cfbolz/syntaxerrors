@@ -12,5 +12,5 @@ states = [
     # 1
     {'\\x01': 0},
     ]
-test = automata.pypy.interpreter.pyparser.automata.DFA(states, accepts)
+test = automata.syntaxerrors.automata.DFA(states, accepts)
 """

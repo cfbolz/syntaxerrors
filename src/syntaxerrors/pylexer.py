@@ -1,5 +1,5 @@
 # Used by genpytokenize.py to generate the parser in pytokenize.py
-from pypy.interpreter.pyparser.automata import DFA, DEFAULT
+from syntaxerrors.automata import DFA, DEFAULT
 
 class EMPTY: pass
 
