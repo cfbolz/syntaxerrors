@@ -253,6 +253,7 @@ class SingleParseError(ParseError):
         self.token_type = token_type
         self.value = value
         self.lineno = lineno
+        # this is a 0-based index
         self.column = column
         self.line = line
         self.expected = expected
