@@ -135,6 +135,7 @@ if a
     except MultipleParseError as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 7]
+        print pyparse.format_messages(e)
 
 def test_lambda_with_newlines():
     info = pyparse.CompileInfo("<string>", "exec")
@@ -153,6 +154,7 @@ if a
     except MultipleParseError as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 7]
+        print pyparse.format_messages(e)
 
 
 def test_missing_comma_list():
@@ -179,6 +181,7 @@ if a
     except MultipleParseError as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 14]
+        print pyparse.format_messages(e)
 
 def test_genexp_keywordarg():
     info = pyparse.CompileInfo("<string>", "exec")
@@ -193,6 +196,7 @@ if a
     except MultipleParseError as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 4]
+        print pyparse.format_messages(e)
 
 
 def test_genexp_tuple():
@@ -208,3 +212,4 @@ if a
     except MultipleParseError as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 4]
+        print pyparse.format_messages(e)
