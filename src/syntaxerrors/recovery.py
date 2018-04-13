@@ -6,8 +6,8 @@ from syntaxerrors import parser
 # considered a success
 SUCCESS_NUMBER_TOKENS = 5
 
-# number of shifts allowed in a repair
-NUMBER_SHIFTS = 4
+# number of existing tokens allowed in a repair
+NUMBER_EXISTING = 4
 
 # number of inserts allowed in a repair
 NUMBER_INSERTS = 4
@@ -43,19 +43,20 @@ class Repair(object):
         return True
 
     def further_changes(self, grammar):
+        tokname, = [name for name, x in grammar.TOKENS.items() if x == self.tokens[self.index][0]]
         # shift
-        if self.name.count("s") < NUMBER_SHIFTS:
+        if self.name.count("e") < NUMBER_EXISTING:
             token = self.tokens[self.index]
             label_index = grammar.classify(token)
-            token_type, value, lineno, column, line = token
-            action, next_state, _ = parser.find_action(self.stack, grammar, token, label_index)
-            if action == parser.SHIFT:
-                stack = self.stack.shift_pop(grammar, next_state, token_type, value, lineno, column)
-                yield Repair(stack, self.tokens, self.index + 1, self.name + 's', self.tokrepr)
+            try:
+                stack = parser.add_token(self.stack, grammar, token, label_index)
+            except parser.ParseError:
+                pass
+            else:
+                yield Repair(stack, self.tokens, self.index + 1, self.name + 'e', self.tokrepr + ["existing " + tokname])
 
         # delete next token
         if self.name.count("d") < NUMBER_DELETES and (self.name == '' or self.name[-1] != 'i'):
-            tokname, = [name for name, x in grammar.TOKENS.items() if x == self.tokens[self.index][0]]
             yield Repair(self.stack, self.tokens, self.index + 1, self.name + 'd', self.tokrepr + ["delete " + tokname])
 
         # insert token
