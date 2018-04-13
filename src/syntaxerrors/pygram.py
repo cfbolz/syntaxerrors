@@ -1,14 +1,18 @@
 import os
 import io
 from syntaxerrors import parser, pytoken
+from syntaxerrors.pytoken import tokens
 
 from syntaxerrors.pytoken import tokens
 
 class PythonGrammar(parser.Grammar):
 
-    KEYWORD_TOKEN = pytoken.python_tokens["NAME"]
+    KEYWORD_TOKEN = tokens.NAME
     TOKENS = pytoken.python_tokens
     OPERATOR_MAP = pytoken.python_opmap
+    never_generate_as_fake = {
+        tokens.ENDMARKER,
+    }
 
 def _get_python_grammar():
     from syntaxerrors import metaparser
