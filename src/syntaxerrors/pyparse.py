@@ -113,7 +113,14 @@ class PythonParser(parser.Parser):
         else:
             enc = _normalize_encoding(_check_for_encoding(textsrc))
             if enc is not None and enc not in ('utf-8', 'iso-8859-1'):
-                textsrc = recode_to_utf8(textsrc, enc) # XXX can raise LookupError?
+                try:
+                    textsrc = recode_to_utf8(textsrc, enc) # XXX can raise LookupError?
+                except LookupError:
+                    raise error.SyntaxError("Unknown encoding: %s" % enc,
+                                            filename=compile_info.filename)
+                except UnicodeDecodeError as e:
+                    raise error.SyntaxError(str(e))
+
                     #if e.match(space, space.w_LookupError):
                     #    raise error.SyntaxError("Unknown encoding: %s" % enc,
                     #                            filename=compile_info.filename)
@@ -164,31 +171,33 @@ class PythonParser(parser.Parser):
 
             try:
                 self.add_tokens(tokens)
-            except parser.ParseError as e:
-                raise
-                # Catch parse errors, pretty them up and reraise them as a
-                # SyntaxError.
-                new_err = error.IndentationError
-                if tp == pygram.tokens.INDENT:
-                    msg = "unexpected indent"
-                elif e.expected == pygram.tokens.INDENT:
-                    msg = "expected an indented block"
-                else:
-                    new_err = error.SyntaxError
-                    msg = "invalid syntax"
-                    if e.expected_str is not None:
-                        msg += " (expected '%s')" % e.expected_str
-
-                # parser.ParseError(...).column is 0-based, but the offsets in the
-                # exceptions in the error module are 1-based, hence the '+ 1'
-                raise new_err(msg, e.lineno, e.column + 1, e.line,
-                              compile_info.filename)
+            except parser.SingleParseError as e:
+                raise convert_parse_error(e, compile_info)
             else:
                 tree = self.root
         finally:
             # Avoid hanging onto the tree.
             self.root = None
         return tree
+
+def convert_parse_error(e, compile_info):
+    # Catch parse errors, pretty them up and reraise them as a
+    # SyntaxError.
+    new_err = error.IndentationError
+    if e.token_type == pygram.tokens.INDENT:
+        msg = "unexpected indent"
+    elif e.expected == pygram.tokens.INDENT:
+        msg = "expected an indented block"
+    else:
+        new_err = error.SyntaxError
+        msg = "invalid syntax"
+        if e.expected_str is not None:
+            msg += " (expected '%s')" % e.expected_str
+
+    # parser.ParseError(...).column is 0-based, but the offsets in the
+    # exceptions in the error module are 1-based, hence the '+ 1'
+    return new_err(msg, e.lineno, e.column + 1, e.line,
+                   compile_info.filename)
 
 def format_messages(e):
     if isinstance(e, parser.SingleParseError):
