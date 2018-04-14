@@ -16,12 +16,15 @@ $Id: automata.py,v 1.2 2003/10/02 17:37:17 jriehl Exp $
 # PYPY Modification: DEFAULT is a singleton, used only in the pre-RPython
 # dicts (see pytokenize.py).  Then DFA.__init__() turns these dicts into
 # more compact strings.
+
 DEFAULT = object()
 
 # PYPY Modification : removed all automata functions (any, maybe,
 #                     newArcPair, etc.)
 
-ERROR_STATE = chr(255)
+import six
+
+ERROR_STATE = six.int2byte(255)
 
 class DFA:
     # ____________________________________________________________
@@ -34,6 +37,7 @@ class DFA:
         maximum = 0
         for state in states:
             for key in state:
+                assert isinstance(key, bytes) or key is DEFAULT
                 if key == DEFAULT:
                     continue
                 maximum = max(ord(key), maximum)
@@ -43,18 +47,18 @@ class DFA:
         for i, state in enumerate(states):
             default = ERROR_STATE
             if DEFAULT in state:
-                default = chr(state[DEFAULT])
+                default = six.int2byte(state[DEFAULT])
             defaults.append(default)
             string_state = [default] * self.max_char
-            for key, value in state.iteritems():
+            for key, value in state.items():
                 if key == DEFAULT:
                     continue
                 assert len(key) == 1
                 assert ord(key) < self.max_char
-                string_state[ord(key)] = chr(value)
+                string_state[ord(key)] = six.int2byte(value)
             string_states.extend(string_state)
-        self.states = "".join(string_states)
-        self.defaults = "".join(defaults)
+        self.states = b"".join(string_states)
+        self.defaults = b"".join(defaults)
         self.accepts = accepts
         self.start = start
 
