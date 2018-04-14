@@ -145,7 +145,6 @@ class PythonParser(parser.Parser):
             flags &= ~astconsts.PyCF_DONT_IMPLY_DEDENT
 
         self.prepare(_targets[compile_info.mode])
-        tp = 0
         try:
             try:
                 # Note: we no longer pass the CO_FUTURE_* to the tokenizer,
@@ -188,7 +187,7 @@ def convert_parse_error(e, compile_info):
     # Catch parse errors, pretty them up and reraise them as a
     # SyntaxError.
     new_err = error.IndentationError
-    if e.token_type == pygram.tokens.INDENT:
+    if e.token.token_type == pygram.tokens.INDENT:
         msg = "unexpected indent"
     elif e.expected == pygram.tokens.INDENT:
         msg = "expected an indented block"
@@ -200,7 +199,7 @@ def convert_parse_error(e, compile_info):
 
     # parser.ParseError(...).column is 0-based, but the offsets in the
     # exceptions in the error module are 1-based, hence the '+ 1'
-    return new_err(msg, e.lineno, e.column + 1, e.line,
+    return new_err(msg, e.token.lineno, e.token.column + 1, e.token.line,
                    compile_info.filename)
 
 def format_messages(e):

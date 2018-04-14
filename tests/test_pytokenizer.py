@@ -1,6 +1,7 @@
 import pytest
 from syntaxerrors import pytokenizer
 from syntaxerrors.pytoken import tokens
+from syntaxerrors.parser import Token
 from syntaxerrors.error import TokenError
 
 def tokenize(s):
@@ -22,12 +23,12 @@ class TestTokenizer(object):
         line = "a+1"
         tks = tokenize(line)
         assert tks == [
-            (tokens.NAME, 'a', 1, 0, line),
-            (tokens.PLUS, '+', 1, 1, line),
-            (tokens.NUMBER, '1', 1, 2, line),
-            (tokens.NEWLINE, '', 2, 0, '\n'),
-            (tokens.NEWLINE, '', 2, 0, '\n'),
-            (tokens.ENDMARKER, '', 2, 0, ''),
+            Token(tokens.NAME, 'a', 1, 0, line),
+            Token(tokens.PLUS, '+', 1, 1, line),
+            Token(tokens.NUMBER, '1', 1, 2, line),
+            Token(tokens.NEWLINE, '', 2, 0, '\n'),
+            Token(tokens.NEWLINE, '', 2, 0, '\n'),
+            Token(tokens.ENDMARKER, '', 2, 0, ''),
             ]
 
     def test_error_parenthesis(self):

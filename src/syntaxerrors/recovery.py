@@ -43,7 +43,7 @@ class Repair(object):
         return True
 
     def further_changes(self, grammar):
-        tokname, = [name for name, x in grammar.TOKENS.items() if x == self.tokens[self.index][0]]
+        tokname, = [name for name, x in grammar.TOKENS.items() if x == self.tokens[self.index].token_type]
         # shift
         if self.name.count("e") < NUMBER_EXISTING:
             token = self.tokens[self.index]
@@ -62,7 +62,7 @@ class Repair(object):
         # insert token
         if self.name.count("i") < NUMBER_INSERTS:
             for tp, value in grammar.repair_fake_tokens():
-                token = tp, value, -1, -1, "fake line"
+                token = parser.Token(tp, value, -1, -1, "fake line")
                 label_index = grammar.classify(token)
                 try:
                     stack = parser.add_token(self.stack, grammar, token, label_index)
