@@ -24,7 +24,8 @@ DEFAULT = object()
 
 import six
 
-ERROR_STATE = six.int2byte(255)
+ERROR_STATE_INT = 255
+ERROR_STATE = six.int2byte(ERROR_STATE_INT)
 
 class DFA:
     # ____________________________________________________________
@@ -65,20 +66,20 @@ class DFA:
     # ____________________________________________________________
 
     def _next_state(self, item, crntState):
-        if ord(item) >= self.max_char:
-            return self.defaults[crntState]
+        if item >= self.max_char:
+            return six.indexbytes(self.defaults, crntState)
         else:
-            return self.states[crntState * self.max_char + ord(item)]
+            return six.indexbytes(self.states, crntState * self.max_char + item)
 
     def recognize(self, inVec, pos = 0):
         crntState = self.start
         lastAccept = False
         i = pos
         for i in range(pos, len(inVec)):
-            item = inVec[i]
+            item = six.indexbytes(inVec, i)
             accept = self.accepts[crntState]
             crntState = self._next_state(item, crntState)
-            if crntState != ERROR_STATE:
+            if crntState != ERROR_STATE_INT:
                 pass
             elif accept:
                 return i
@@ -88,7 +89,6 @@ class DFA:
                 return i - 1
             else:
                 return -1
-            crntState = ord(crntState)
             lastAccept = accept
         # if self.states[crntState][1]:
         if self.accepts[crntState]:
@@ -106,14 +106,13 @@ class NonGreedyDFA (DFA):
         crntState = self.start
         i = pos
         for i in range(pos, len(inVec)):
-            item = inVec[i]
+            item = six.indexbytes(inVec, i)
             accept = self.accepts[crntState]
             if accept:
                 return i
             crntState = self._next_state(item, crntState)
-            if crntState == ERROR_STATE:
+            if crntState == ERROR_STATE_INT:
                 return -1
-            crntState = ord(crntState)
             i += 1
         if self.accepts[crntState]:
             return i
