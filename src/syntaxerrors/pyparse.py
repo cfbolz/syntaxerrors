@@ -173,6 +173,10 @@ class PythonParser(parser.Parser):
                 self.add_tokens(tokens)
             except parser.SingleParseError as e:
                 raise convert_parse_error(e, compile_info)
+            except parser.MultipleParseError as e:
+                errors = [convert_parse_error(e, compile_info)
+                        for e in e.errors]
+                raise error.MultipleSyntaxErrors(errors)
             else:
                 tree = self.root
         finally:
@@ -200,28 +204,21 @@ def convert_parse_error(e, compile_info):
                    compile_info.filename)
 
 def format_messages(e):
-    if isinstance(e, parser.SingleParseError):
+    if isinstance(e, error.SyntaxError):
         return format_single(e)
     result = []
-    for i, error in enumerate(e.errors):
+    for i, e in enumerate(e.errors):
         if i == 1:
             result.append("\n___\nThere were possibly further errors, but they are guesses:\n"
                           "(This is an experimental feature! if the errors are nonsense, please report a bug!)")
-        result.append(format_single(error))
+        result.append(format_single(e))
     return "\n\n".join(result) + "\n"
 
 def format_single(e):
     # format message
-    line = e.line
-    caret = " " * e.column + "^"
-    if e.token_type == pygram.tokens.INDENT:
-        msg = "unexpected indent"
-    elif e.expected == pygram.tokens.INDENT:
-        msg = "expected an indented block"
-    else:
-        msg = "invalid syntax"
-        if e.expected_str is not None:
-            msg += " (expected '%s')" % e.expected_str
+    line = e.text
+    caret = " " * (e.offset - 1) + "^"
+    msg = e.msg
 
     lineno = None
     if type(e.lineno) is int:

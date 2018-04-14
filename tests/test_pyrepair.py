@@ -3,7 +3,7 @@ import os
 import pytest
 
 from syntaxerrors import pyparse
-from syntaxerrors.parser import MultipleParseError
+from syntaxerrors.error import MultipleSyntaxErrors
 
 def test_find_four_errors():
     info = pyparse.CompileInfo("<string>", "exec")
@@ -28,7 +28,7 @@ if a
     print 5
 
 """, info)
-    except MultipleParseError as e:
+    except MultipleSyntaxErrors as e:
         assert len(e.errors) == 4
         assert [x.lineno for x in e.errors] == [2, 5, 9, 16]
         msg = pyparse.format_messages(e)
@@ -74,7 +74,7 @@ def f(self):
 print b
 
 """, info)
-    except MultipleParseError as e:
+    except MultipleSyntaxErrors as e:
         assert len(e.errors) == 3
         assert [x.lineno for x in e.errors] == [2, 5, 9]
         msg = pyparse.format_messages(e)
@@ -114,7 +114,7 @@ if a
     print 2
 
 """, info)
-    except MultipleParseError as e:
+    except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 7]
         print pyparse.format_messages(e)
@@ -133,7 +133,7 @@ if a
     print 2
 
 """, info)
-    except MultipleParseError as e:
+    except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 7]
         print pyparse.format_messages(e)
@@ -160,7 +160,7 @@ if a
     print 2
 
 """, info)
-    except MultipleParseError as e:
+    except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 14]
         print pyparse.format_messages(e)
@@ -175,7 +175,7 @@ print 1
 if a
     print 3
 """, info)
-    except MultipleParseError as e:
+    except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 4]
         print pyparse.format_messages(e)
@@ -191,7 +191,7 @@ print 1
 if a
     print 3
 """, info)
-    except MultipleParseError as e:
+    except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 4]
         print pyparse.format_messages(e)
