@@ -1,7 +1,7 @@
 from syntaxerrors import automata
-from syntaxerrors.pygram import tokens
 from syntaxerrors.parser import Token
 from syntaxerrors.pytoken import python_opmap
+from syntaxerrors.pytoken import tokens
 from syntaxerrors.error import TokenError, TokenIndentationError
 from syntaxerrors.pytokenize import tabsize, whiteSpaceDFA, \
     triple_quoted, endDFAs, single_quoted, pseudoDFA

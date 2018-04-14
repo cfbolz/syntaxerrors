@@ -3,7 +3,6 @@ import io
 from syntaxerrors import parser, pytoken
 from syntaxerrors.pytoken import tokens
 
-from syntaxerrors.pytoken import tokens
 
 class PythonGrammar(parser.Grammar):
 

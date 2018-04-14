@@ -20,7 +20,7 @@ def check_token_error(s, msg=None, pos=-1, line=-1):
 class TestTokenizer(object):
 
     def test_simple(self):
-        line = "a+1"
+        line = b"a+1"
         tks = tokenize(line)
         assert tks == [
             Token(tokens.NAME, 'a', 1, 0, line),

@@ -10,6 +10,9 @@ When run from the command line, this should pretty print the DFA machinery.
 $Id: genPytokenize.py,v 1.1 2003/10/02 17:37:17 jriehl Exp $
 """
 
+from __future__ import print_function
+
+
 from syntaxerrors.pylexer import *
 from syntaxerrors.automata import NonGreedyDFA, DFA, DEFAULT
 
@@ -297,6 +300,8 @@ def output(name, dfa_class, dfa, states):
                 k = "automata.DEFAULT"
             else:
                 k = repr(k)
+                if not k.startswith('b'): # python 2
+                    k = 'b' + k
             s.write(k)
             s.write('::')
             s.write(repr(v))
@@ -323,16 +328,16 @@ def output(name, dfa_class, dfa, states):
 
 def main ():
     pseudoDFA, states_pseudoDFA = makePyPseudoDFA()
-    print output("pseudoDFA", "DFA", pseudoDFA, states_pseudoDFA)
+    print(output("pseudoDFA", "DFA", pseudoDFA, states_pseudoDFA))
     endDFAMap = makePyEndDFAMap()
     dfa, states = endDFAMap['"""']
-    print output("double3DFA", "NonGreedyDFA", dfa, states)
+    print(output("double3DFA", "NonGreedyDFA", dfa, states))
     dfa, states = endDFAMap["'''"]
-    print output("single3DFA", "NonGreedyDFA", dfa, states)
+    print(output("single3DFA", "NonGreedyDFA", dfa, states))
     dfa, states = endDFAMap["'"]
-    print output("singleDFA", "DFA", dfa, states)
+    print(output("singleDFA", "DFA", dfa, states))
     dfa, states = endDFAMap["\""]
-    print output("doubleDFA", "DFA", dfa, states)
+    print(output("doubleDFA", "DFA", dfa, states))
 
 # ______________________________________________________________________
 
