@@ -2,8 +2,8 @@ from collections import deque
 
 from syntaxerrors import parser
 
-# number of tokens that must be successfully parsed for the algorithm to be
-# considered a success
+# number of tokens that must be successfully parsed after the next newline for
+# the repair to be considered a success
 SUCCESS_NUMBER_TOKENS = 5
 
 # number of existing tokens allowed in a repair
@@ -28,10 +28,9 @@ class Repair(object):
     def __repr__(self):
         return "<Repair %s %s>" % (self.name, self.tokrepr)
 
-    def parses_successfully(self, grammar):
+    def parses_successfully(self, grammar, endindex):
         stack = self.stack
-        endindex = self.index + SUCCESS_NUMBER_TOKENS# + self.name.count("i")
-        for i in range(self.index, min(len(self.tokens), endindex)):
+        for i in range(self.index, endindex):
             token = self.tokens[i]
             label_index = grammar.classify(token)
             try:
@@ -76,14 +75,26 @@ def initial_queue(stack, tokens, index):
     return [Repair(stack, tokens, index)]
 
 def try_recover(grammar, stack, tokens, index):
+    import pdb; pdb.set_trace()
     queue = initial_queue(stack, tokens, index)
+    endindex = compute_endindex(tokens, index)
     while queue:
         newqueue = []
         for element in queue:
             for repair in element.further_changes(grammar):
-                if repair.parses_successfully(grammar):
+                if repair.parses_successfully(grammar, endindex):
                     assert repair.name
                     print '=====', repair.name, repair
                     return repair.tokens, repair.index, repair.stack
                 newqueue.append(repair)
         queue = newqueue
+
+def compute_endindex(tokens, index):
+    endindex = index
+    lineno = tokens[index].lineno
+    for endindex in range(index, len(tokens)):
+        token = tokens[endindex]
+        if token.lineno > lineno:
+            break
+    endindex += SUCCESS_NUMBER_TOKENS
+    return min(len(tokens), endindex)

@@ -110,13 +110,15 @@ if x:
 else:
     print 2
 
+print 2 + 2
+
 if a
     print 2
 
 """, info)
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
-        assert [x.lineno for x in e.errors] == [4, 7]
+        assert [x.lineno for x in e.errors] == [4, 9]
         print pyparse.format_messages(e)
 
 def test_lambda_with_newlines():
@@ -194,4 +196,24 @@ if a
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 4]
+        print pyparse.format_messages(e)
+
+
+def test_missing_newline():
+    info = pyparse.CompileInfo("<string>", "exec")
+    p = pyparse.PythonParser()
+    try:
+        st = p.parse_source("""
+if 1: def some_complicated_function(w, ith, many, tokens):
+        if a:
+            print 2
+        else:
+            print 3
+
+if x
+    print 3
+""", info)
+    except MultipleSyntaxErrors as e:
+        assert len(e.errors) == 2
+        assert [x.lineno for x in e.errors] == [2, 8]
         print pyparse.format_messages(e)

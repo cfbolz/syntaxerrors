@@ -10,6 +10,7 @@ class PythonGrammar(parser.Grammar):
     KEYWORD_TOKEN = tokens.NAME
     TOKENS = pytoken.python_tokens
     OPERATOR_MAP = pytoken.python_opmap
+
     never_generate_as_fake = {
         tokens.ENDMARKER,
     }
