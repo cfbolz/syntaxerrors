@@ -75,7 +75,6 @@ def initial_queue(stack, tokens, index):
     return [Repair(stack, tokens, index)]
 
 def try_recover(grammar, stack, tokens, index):
-    import pdb; pdb.set_trace()
     queue = initial_queue(stack, tokens, index)
     endindex = compute_endindex(tokens, index)
     while queue:
