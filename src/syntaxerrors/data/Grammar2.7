@@ -76,7 +76,7 @@ with_item: test ['as' expr]
 # NB compile.c makes sure that the default except clause is last
 except_clause: 'except' [test [('as' | ',') test]]
 
-fakesuite: FAKESUITESTART NEWLINE INDENT stmt+ DEDENT
+fakesuite: FAKESUITESTART [':'] NEWLINE INDENT stmt+ DEDENT
 suite: simple_stmt | NEWLINE realorfakesuite
 
 realorfakesuite: INDENT stmt+ DEDENT | FAKESUITE
