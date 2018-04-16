@@ -21,6 +21,7 @@ class PythonGrammar(parser.Grammar):
         tokens.ENDMARKER,
         tokens.INDENT,
         tokens.DEDENT,
+        tokens.NEWLINE,
     }
 
 

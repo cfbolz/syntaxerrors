@@ -7,13 +7,16 @@ from syntaxerrors import parser
 SUCCESS_NUMBER_TOKENS = 5
 
 # number of existing tokens allowed in a repair
-NUMBER_EXISTING = 4
+NUMBER_EXISTING = 6
 
 # number of inserts allowed in a repair
 NUMBER_INSERTS = 4
 
 # number of deletes allowed in a repair
 NUMBER_DELETES = 3
+
+# number of repair attempts to try
+ATTEMPTS_LIMIT = 100000
 
 class Repair(object):
     def __init__(self, stack, tokens, index, name='', tokrepr=None):
@@ -78,17 +81,23 @@ def initial_queue(stack, tokens, index):
 def try_recover(grammar, stack, tokens, index):
     queue = initial_queue(stack, tokens, index)
     endindex = compute_endindex(tokens, index)
+    attempts = 0
     while queue:
         newqueue = []
         for element in queue:
             for repair in element.further_changes(grammar):
+                attempts += 1
+                if attempts > ATTEMPTS_LIMIT:
+                    break
+                if attempts % 10000 == 0:
+                    print attempts, len(newqueue)
                 if repair.parses_successfully(grammar, endindex):
                     assert repair.name
                     print '=====', repair.name, repair
                     return repair.tokens, repair.index, repair.stack
                 newqueue.append(repair)
         queue = newqueue
-    assert 0, "no recovery found!"
+    assert 0, "no recovery found! despite trying %s" % (attempts, )
 
 def compute_endindex(tokens, index):
     endindex = index

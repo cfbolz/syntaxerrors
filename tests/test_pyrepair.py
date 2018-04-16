@@ -238,3 +238,75 @@ if x
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [5, 10]
         print pyparse.format_messages(e)
+
+def Xtest_indent_broken():
+
+    info = pyparse.CompileInfo("<string>", "exec")
+    p = pyparse.PythonParser()
+    try:
+        st = p.parse_source("""
+try:
+    stack = add_token(stack, grammar, token, label_index)
+except ParseError as e:
+    errors.append(e)
+    tokens, i, stack = try_recover(grammar, stack, tokens, i)
+    if i == -1:
+        break
+except Done as e:
+%   self.root = e.node
+    break
+
+print 17
+
+if x
+    print 3
+""", info)
+    except MultipleSyntaxErrors as e:
+        assert len(e.errors) == 2
+        assert [x.lineno for x in e.errors] == [5, 10]
+        print pyparse.format_messages(e)
+
+
+
+def Xtest_random_newline():
+    info = pyparse.CompileInfo("<string>", "exec")
+    p = pyparse.PythonParser()
+    try:
+        st = p.parse_source("""
+try:
+    1/0
+exc
+  ept ZeroDivisionError as e:
+    foo.bar.baz
+else:
+    blub
+
+print 17
+
+if x
+    print 3
+""", info)
+    except MultipleSyntaxErrors as e:
+        assert len(e.errors) == 2
+        assert [x.lineno for x in e.errors] == [5, 10]
+        print pyparse.format_messages(e)
+
+def test_random_comment():
+    info = pyparse.CompileInfo("<string>", "exec")
+    p = pyparse.PythonParser()
+    try:
+        st = p.parse_source("""
+def add_tokens(self, tokens):
+    from #yntaxerrors.recovery import try_recover
+    grammar = self.grammar
+    stack = StackEntry(None, grammar.dfas[self.start - 256], 0)
+
+print 17
+
+if x
+    print 3
+""", info)
+    except MultipleSyntaxErrors as e:
+        assert len(e.errors) == 2
+        assert [x.lineno for x in e.errors] == [3, 9]
+        print pyparse.format_messages(e)
