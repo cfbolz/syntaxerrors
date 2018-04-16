@@ -310,3 +310,22 @@ if x
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [3, 9]
         print pyparse.format_messages(e)
+
+def test_need_to_fix_earlier():
+    info = pyparse.CompileInfo("<string>", "exec")
+    p = pyparse.PythonParser()
+    try:
+        st = p.parse_source("""
+de% blub(self, tokens):
+    grammar = self.grammar
+    stack = StackEntry(None, grammar.dfas[self.start - 256], 0)
+
+print 17
+
+if x
+    print 3
+""", info)
+    except MultipleSyntaxErrors as e:
+        assert len(e.errors) == 2
+        assert [x.lineno for x in e.errors] == [2, 8]
+        print pyparse.format_messages(e)

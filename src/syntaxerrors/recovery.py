@@ -19,17 +19,21 @@ NUMBER_DELETES = 3
 ATTEMPTS_LIMIT = 100000
 
 class Repair(object):
-    def __init__(self, stack, tokens, index, name='', tokrepr=None):
+    def __init__(self, stack, tokens, index, name='', reprtokens=None):
         self.stack = stack
         self.tokens = tokens
         self.index = index
         self.name = name
-        if tokrepr is None:
-            tokrepr = []
-        self.tokrepr = tokrepr
+        if reprtokens is None:
+            reprtokens = []
+        self.reprtokens = reprtokens
 
     def __repr__(self):
-        return "<Repair %s %s>" % (self.name, self.tokrepr)
+        l = []
+        for i, c in enumerate(self.name):
+            l.append({'e': 'existing', 'd': 'delete', 'i': 'insert'}[c])
+            l.append(self.reprtokens[i])
+        return "<Repair %s %s>" % (self.name, l)
 
     def parses_successfully(self, grammar, endindex):
         stack = self.stack
@@ -45,22 +49,21 @@ class Repair(object):
         return True
 
     def further_changes(self, grammar):
-        tokname, = [name for name, x in grammar.TOKENS.items() if x == self.tokens[self.index].token_type]
-        # shift
-        if self.name.count("e") < NUMBER_EXISTING:
-            token = self.tokens[self.index]
+        token = self.tokens[self.index]
+        # consume existing token
+        if self.name and self.name.count("e") < NUMBER_EXISTING:
             label_index = grammar.classify(token)
             try:
                 stack = parser.add_token(self.stack, grammar, token, label_index)
             except parser.ParseError:
                 pass
             else:
-                yield Repair(stack, self.tokens, self.index + 1, self.name + 'e', self.tokrepr + ["existing " + tokname])
+                yield Repair(stack, self.tokens, self.index + 1, self.name + 'e', self.reprtokens + [token])
 
         # delete next token
         if (self.name.count("d") < NUMBER_DELETES and (self.name == '' or self.name[-1] != 'i') and
                 self.tokens[self.index].token_type not in grammar.never_delete):
-            yield Repair(self.stack, self.tokens, self.index + 1, self.name + 'd', self.tokrepr + ["delete " + tokname])
+            yield Repair(self.stack, self.tokens, self.index + 1, self.name + 'd', self.reprtokens + [token])
 
         # insert token
         if self.name.count("i") < NUMBER_INSERTS:
@@ -71,8 +74,7 @@ class Repair(object):
                     stack = parser.add_token(self.stack, grammar, token, label_index)
                 except parser.ParseError:
                     continue
-                tokname, = [name for name, x in grammar.TOKENS.items() if x == tp]
-                yield Repair(stack, self.tokens, self.index, self.name + 'i', self.tokrepr + ["insert " + tokname])
+                yield Repair(stack, self.tokens, self.index, self.name + 'i', self.reprtokens + [token])
 
 
 def initial_queue(stack, tokens, index):

@@ -16,9 +16,11 @@ class Grammar(object):
     the Parser.
     """
 
+    TOKENS = {}
     KEYWORD_TOKEN = -121212
     never_generate_as_fake = set()
     never_delete = set()
+
 
     def __init__(self):
         self.symbol_ids = {}
@@ -31,6 +33,11 @@ class Grammar(object):
         self.token_ids = {}
         self.start = -1
         self._repair_fake_tokens = None
+
+        self.TOKEN_NAMES = d = {}
+        for name, index in self.TOKENS.items():
+            if isinstance(index, int):
+                d[index] = name
 
     def shared_copy(self):
         new = self.__class__()
@@ -45,13 +52,18 @@ class Grammar(object):
 
     def classify(self, token):
         """Find the label for a token."""
+        if token.label_index != -1:
+            return token.label_index
+        token.grammar = self
         if token.token_type == self.KEYWORD_TOKEN:
             label_index = self.keyword_ids.get(token.value, -1)
             if label_index != -1:
+                token.label_index = label_index
                 return label_index
         label_index = self.token_ids.get(token.token_type, -1)
         if label_index == -1:
             raise ParseError("invalid token", token)
+        token.label_index = label_index
         return label_index
 
 
@@ -71,7 +83,8 @@ class Grammar(object):
                     l.append((tp, value))
             else:
                 l.append((tp, "fake"))
-        self._repair_fake_tokens = l
+        # heuristic: reverse to make fake tokens appear early
+        self._repair_fake_tokens = l[::-1]
         return l
 
 
@@ -109,9 +122,15 @@ class Token(object):
         # 0-based offset
         self.column = column
         self.line = line
+        # label_index in the grammar, computed later
+        self.label_index = -1
+        self.grammar = None
 
     def __repr__(self):
-        return "Token(%s, %s)" % (self.token_type, self.value)
+        if self.grammar is None:
+            return "Token(%s, %r)" % (self.token_type, self.value)
+        return "Token(%s, %r)" % (self.grammar.TOKEN_NAMES[self.token_type],
+                                  self.value)
 
     def __eq__(self, other):
         # for tests
