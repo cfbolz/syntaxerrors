@@ -13,7 +13,16 @@ class PythonGrammar(parser.Grammar):
 
     never_generate_as_fake = {
         tokens.ENDMARKER,
+        tokens.INDENT,
+        tokens.DEDENT,
     }
+
+    never_delete = {
+        tokens.ENDMARKER,
+        tokens.INDENT,
+        tokens.DEDENT,
+    }
+
 
 def _get_python_grammar():
     from syntaxerrors import metaparser

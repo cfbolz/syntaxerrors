@@ -18,6 +18,7 @@ class Grammar(object):
 
     KEYWORD_TOKEN = -121212
     never_generate_as_fake = set()
+    never_delete = set()
 
     def __init__(self):
         self.symbol_ids = {}
@@ -62,6 +63,10 @@ class Grammar(object):
             if tp in self.never_generate_as_fake:
                 continue
             if tp == self.KEYWORD_TOKEN:
+                keyword = "keyword"
+                while keyword in self.keyword_ids:
+                    keyword += "_"
+                l.append((tp, keyword))
                 for value in self.keyword_ids:
                     l.append((tp, value))
             else:

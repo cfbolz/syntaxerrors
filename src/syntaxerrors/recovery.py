@@ -55,7 +55,8 @@ class Repair(object):
                 yield Repair(stack, self.tokens, self.index + 1, self.name + 'e', self.tokrepr + ["existing " + tokname])
 
         # delete next token
-        if self.name.count("d") < NUMBER_DELETES and (self.name == '' or self.name[-1] != 'i'):
+        if (self.name.count("d") < NUMBER_DELETES and (self.name == '' or self.name[-1] != 'i') and
+                self.tokens[self.index].token_type not in grammar.never_delete):
             yield Repair(self.stack, self.tokens, self.index + 1, self.name + 'd', self.tokrepr + ["delete " + tokname])
 
         # insert token
@@ -87,6 +88,7 @@ def try_recover(grammar, stack, tokens, index):
                     return repair.tokens, repair.index, repair.stack
                 newqueue.append(repair)
         queue = newqueue
+    assert 0, "no recovery found!"
 
 def compute_endindex(tokens, index):
     endindex = index

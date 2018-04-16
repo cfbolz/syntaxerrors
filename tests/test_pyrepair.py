@@ -217,3 +217,24 @@ if x
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 8]
         print pyparse.format_messages(e)
+
+def test_extra_dot():
+    info = pyparse.CompileInfo("<string>", "exec")
+    p = pyparse.PythonParser()
+    try:
+        st = p.parse_source("""
+if 1:
+    if errors:
+        self.root = None
+        if len(error.) == 1:
+            raise errors[0]
+        else:
+            raise MultipleParseError(errors)
+
+if x
+    print 3
+""", info)
+    except MultipleSyntaxErrors as e:
+        assert len(e.errors) == 2
+        assert [x.lineno for x in e.errors] == [5, 10]
+        print pyparse.format_messages(e)
