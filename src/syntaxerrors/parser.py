@@ -493,7 +493,6 @@ def find_action(stack, grammar, token, label_index):
             # Check if this token can start a child node.
             if sub_node_dfa.could_match_token(label_index):
                 return REDUCE, next_state, sub_node_dfa
-    else:
-        if is_accepting:
-            return POP, None, None
-        return ERROR, None, None
+    if is_accepting:
+        return POP, None, None
+    return ERROR, None, None
