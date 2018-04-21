@@ -76,6 +76,9 @@ class Repair(object):
                     continue
                 yield Repair(stack, self.tokens, self.index, self.name + 'i', self.reprtokens + [token])
 
+    def key(self):
+        return (self.index, self.stack.next, self.stack.state, self.stack.dfa)
+
 
 def initial_queue(stack, tokens, index):
     return [Repair(stack, tokens, index)]
@@ -84,10 +87,16 @@ def try_recover(grammar, stack, tokens, index):
     queue = initial_queue(stack, tokens, index)
     endindex = compute_endindex(tokens, index)
     attempts = 0
+    unexplored = 0
+    seen = {}
     while queue:
         newqueue = []
         for element in queue:
             for repair in element.further_changes(grammar):
+                if repair.key() in seen:
+                    unexplored += 1
+                else:
+                    seen[repair.key()] = repair
                 attempts += 1
                 if attempts > ATTEMPTS_LIMIT:
                     break
@@ -95,7 +104,7 @@ def try_recover(grammar, stack, tokens, index):
                     print attempts, len(newqueue)
                 if repair.parses_successfully(grammar, endindex):
                     assert repair.name
-                    print '=====', repair.name, repair
+                    print '=====', unexplored, attempts, repair.name, repair
                     return repair.tokens, repair.index, repair.stack
                 newqueue.append(repair)
         queue = newqueue
