@@ -19,9 +19,8 @@ NUMBER_DELETES = 3
 ATTEMPTS_LIMIT = 100000
 
 class Repair(object):
-    def __init__(self, stack, tokens, index, name='', reprtokens=None):
+    def __init__(self, stack, index, name='', reprtokens=None):
         self.stack = stack
-        self.tokens = tokens
         self.index = index
         self.name = name
         if reprtokens is None:
@@ -35,10 +34,10 @@ class Repair(object):
             l.append(self.reprtokens[i])
         return "<Repair %s %s>" % (self.name, l)
 
-    def parses_successfully(self, grammar, endindex):
+    def parses_successfully(self, tokens, grammar, endindex):
         stack = self.stack
         for i in range(self.index, endindex):
-            token = self.tokens[i]
+            token = tokens[i]
             label_index = grammar.classify(token)
             try:
                 stack = parser.add_token(stack, grammar, token, label_index)
@@ -48,8 +47,8 @@ class Repair(object):
                 return True
         return True
 
-    def further_changes(self, grammar):
-        token = self.tokens[self.index]
+    def further_changes(self, tokens, grammar):
+        token = tokens[self.index]
         # consume existing token
         if self.name and self.name.count("e") < NUMBER_EXISTING:
             label_index = grammar.classify(token)
@@ -58,12 +57,12 @@ class Repair(object):
             except parser.ParseError:
                 pass
             else:
-                yield Repair(stack, self.tokens, self.index + 1, self.name + 'e', self.reprtokens + [token])
+                yield Repair(stack, self.index + 1, self.name + 'e', self.reprtokens + [token])
 
         # delete next token
         if (self.name.count("d") < NUMBER_DELETES and (self.name == '' or self.name[-1] != 'i') and
-                self.tokens[self.index].token_type not in grammar.never_delete):
-            yield Repair(self.stack, self.tokens, self.index + 1, self.name + 'd', self.reprtokens + [token])
+                token.token_type not in grammar.never_delete):
+            yield Repair(self.stack, self.index + 1, self.name + 'd', self.reprtokens + [token])
 
         # insert token
         if self.name.count("i") < NUMBER_INSERTS:
@@ -74,17 +73,17 @@ class Repair(object):
                     stack = parser.add_token(self.stack, grammar, token, label_index)
                 except parser.ParseError:
                     continue
-                yield Repair(stack, self.tokens, self.index, self.name + 'i', self.reprtokens + [token])
+                yield Repair(stack, self.index, self.name + 'i', self.reprtokens + [token])
 
     def key(self):
         return (self.index, self.stack.next, self.stack.state, self.stack.dfa)
 
 
-def initial_queue(stack, tokens, index):
-    return [Repair(stack, tokens, index)]
+def initial_queue(stack, index):
+    return [Repair(stack, index)]
 
 def try_recover(grammar, stack, tokens, index):
-    queue = initial_queue(stack, tokens, index)
+    queue = initial_queue(stack, index)
     endindex = compute_endindex(tokens, index)
     attempts = 0
     unexplored = 0
@@ -92,7 +91,7 @@ def try_recover(grammar, stack, tokens, index):
     while queue:
         newqueue = []
         for element in queue:
-            for repair in element.further_changes(grammar):
+            for repair in element.further_changes(tokens, grammar):
                 if repair.key() in seen:
                     unexplored += 1
                 else:
@@ -102,10 +101,10 @@ def try_recover(grammar, stack, tokens, index):
                     break
                 if attempts % 10000 == 0:
                     print attempts, len(newqueue)
-                if repair.parses_successfully(grammar, endindex):
+                if repair.parses_successfully(tokens, grammar, endindex):
                     assert repair.name
                     print '=====', unexplored, attempts, repair.name, repair
-                    return repair.tokens, repair.index, repair.stack
+                    return tokens, repair.index, repair.stack
                 newqueue.append(repair)
         queue = newqueue
     assert 0, "no recovery found! despite trying %s" % (attempts, )
