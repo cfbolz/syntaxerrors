@@ -6,11 +6,11 @@ import token
 import StringIO
 from syntaxerrors.metaparser import ParserGenerator, PgenError
 from syntaxerrors.pygram import PythonGrammar
-from syntaxerrors import parser
+from syntaxerrors import parser, pytoken
 
 
 class MyGrammar(parser.Grammar):
-    TOKENS = token.__dict__
+    TOKENS = dict(pytoken.tokens.__class__.__dict__)
     OPERATOR_MAP = {
         "+" : token.OP,
         "-" : token.OP,

@@ -171,9 +171,9 @@ class PythonParser(parser.Parser):
             try:
                 self.add_tokens(tokens)
             except parser.SingleParseError as e:
-                raise convert_parse_error(e, compile_info)
+                raise convert_parse_error(e, compile_info, self.grammar)
             except parser.MultipleParseError as e:
-                errors = [convert_parse_error(e, compile_info)
+                errors = [convert_parse_error(e, compile_info, self.grammar)
                         for e in e.errors]
                 raise error.MultipleSyntaxErrors(errors)
             else:
@@ -183,13 +183,13 @@ class PythonParser(parser.Parser):
             self.root = None
         return tree
 
-def convert_parse_error(e, compile_info):
+def convert_parse_error(e, compile_info, grammar):
     # Catch parse errors, pretty them up and reraise them as a
     # SyntaxError.
     new_err = error.IndentationError
     if e.token.token_type == pygram.tokens.INDENT:
         msg = "unexpected indent"
-    elif e.expected == pygram.tokens.INDENT:
+    elif grammar.symbol_names.get(e.expected) == 'realorfakesuite':
         msg = "expected an indented block"
     else:
         new_err = error.SyntaxError

@@ -74,6 +74,7 @@ _add_tok("NL")
 # those are never produced by the tokenizer, but the recovery algorithm can
 # insert it
 _add_tok("FAKESUITESTART") # behaves like: if 1: NEWLINE
+_add_tok("FAKESUITE") # behaves like: INDENT pass DEDENT
 
 del _add_tok
 

@@ -9,9 +9,20 @@ class PythonGrammar(parser.Grammar):
     KEYWORD_TOKEN = tokens.NAME
     TOKENS = pytoken.python_tokens
     OPERATOR_MAP = pytoken.python_opmap
+
     never_generate_as_fake = {
         tokens.ENDMARKER,
+        tokens.INDENT,
+        tokens.DEDENT,
     }
+
+    never_delete = {
+        tokens.ENDMARKER,
+        tokens.INDENT,
+        tokens.DEDENT,
+        tokens.NEWLINE,
+    }
+
 
 def _get_python_grammar():
     from syntaxerrors import metaparser
