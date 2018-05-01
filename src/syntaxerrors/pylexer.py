@@ -108,11 +108,11 @@ def atleastonce (states, *stateIndexPairs):
 
 # ______________________________________________________________________
 
-def closure (states, start, result = 0L):
+def closure (states, start, result = 0):
     if None == result:
-        result = 0L
-    if 0 == (result & (1L << start)):
-        result |= (1L << start)
+        result = 0
+    if 0 == (result & (1 << start)):
+        result |= (1 << start)
         for label, arrow in states[start]:
             if label == EMPTY:
                 result |= closure(states, arrow, result)
@@ -123,14 +123,14 @@ def closure (states, start, result = 0L):
 def nfaToDfa (states, start, finish):
     tempStates = []
     startClosure = closure(states, start)
-    crntTempState = [startClosure, [], 0 != (startClosure & (1L << finish))]
+    crntTempState = [startClosure, [], 0 != (startClosure & (1 << finish))]
     tempStates.append(crntTempState)
     index = 0
     while index < len(tempStates):
         crntTempState = tempStates[index]
         crntClosure, crntArcs, crntAccept = crntTempState
         for index2 in range(0, len(states)):
-            if 0 != (crntClosure & (1L << index2)):
+            if 0 != (crntClosure & (1 << index2)):
                 for label, nfaArrow in states[index2]:
                     if label == EMPTY:
                         continue
@@ -140,7 +140,7 @@ def nfaToDfa (states, start, finish):
                             foundTempArc = True
                             break
                     if not foundTempArc:
-                        tempArc = [label, -1, 0L]
+                        tempArc = [label, -1, 0]
                         crntArcs.append(tempArc)
                     tempArc[2] = closure(states, nfaArrow, tempArc[2])
         for arcIndex in range(0, len(crntArcs)):
@@ -155,7 +155,7 @@ def nfaToDfa (states, start, finish):
             if not targetFound:
                 assert arrow == len(tempStates)
                 newState = [targetStates, [], 0 != (targetStates &
-                                                    (1L << finish))]
+                                                    (1 << finish))]
                 tempStates.append(newState)
             crntArcs[arcIndex][1] = arrow
         index += 1

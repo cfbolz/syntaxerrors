@@ -2,15 +2,15 @@ from syntaxerrors.automata import DFA, DEFAULT
 from syntaxerrors.genpytokenize import output
 
 def test_states():
-    states = [{"\x00": 1}, {"\x01": 0}]
+    states = [{b"\x00": 1}, {b"\x01": 0}]
     d = DFA(states[:], [False, True])
     assert output('test', DFA, d, states) == """\
 accepts = [False, True]
 states = [
     # 0
-    {'\\x00': 1},
+    {b'\\x00': 1},
     # 1
-    {'\\x01': 0},
+    {b'\\x01': 0},
     ]
-test = automata.syntaxerrors.automata.DFA(states, accepts)
+test = automata.DFA(states, accepts)
 """

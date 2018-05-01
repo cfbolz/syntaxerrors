@@ -286,13 +286,12 @@ def output(name, dfa_class, dfa, states):
         lines.append(line)
         lines.append("\n")
         i += 1
-    import StringIO
     lines.append("states = [\n")
     for numstate, state in enumerate(states):
         lines.append("    # ")
         lines.append(str(numstate))
         lines.append('\n')
-        s = StringIO.StringIO()
+        s = []
         i = 0
         for k, v in sorted(state.items()):
             i += 1
@@ -302,17 +301,17 @@ def output(name, dfa_class, dfa, states):
                 k = repr(k)
                 if not k.startswith('b'): # python 2
                     k = 'b' + k
-            s.write(k)
-            s.write('::')
-            s.write(repr(v))
+            s.append(k)
+            s.append('::')
+            s.append(repr(v))
             if i < len(state):
-                s.write(', ')
-        s.write('},')
+                s.append(', ')
+        s.append('},')
         i = 0
         if len(state) <= 4:
-            text = [s.getvalue()]
+            text = ["".join(s)]
         else:
-            text = textwrap.wrap(s.getvalue(), width=36)
+            text = textwrap.wrap("".join(s), width=36)
         for line in text:
             line = line.replace('::', ': ')
             if i == 0:
@@ -323,7 +322,7 @@ def output(name, dfa_class, dfa, states):
             lines.append('\n')
             i += 1
     lines.append("    ]\n")
-    lines.append("%s = automata.%s(states, accepts)\n" % (name, dfa_class))
+    lines.append("%s = automata.%s(states, accepts)\n" % (name, dfa_class.__name__))
     return ''.join(lines)
 
 def main ():
