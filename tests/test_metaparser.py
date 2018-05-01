@@ -5,7 +5,6 @@ import tokenize
 import token
 import StringIO
 from syntaxerrors.metaparser import ParserGenerator, PgenError
-from syntaxerrors.pygram import PythonGrammar
 from syntaxerrors import parser, pytoken
 
 
@@ -43,6 +42,7 @@ class TestParserGenerator:
         assert g.labels[0] == 0
 
     def test_load_python_grammars(self):
+        from syntaxerrors.pygram import PythonGrammar
         gram_pat = os.path.join(os.path.dirname(__file__), "..", "data",
                                 "Grammar*")
         for gram_file in glob.glob(gram_pat):
@@ -106,11 +106,11 @@ class TestParserGenerator:
 
     def test_error(self):
         exc = pytest.raises(PgenError, self.gram_for, "hi").value
-        assert str(exc) == "expected token OP but got NEWLINE"
-        assert exc.location == ((1, 2), (1, 3), "hi\n")
+        assert str(exc) == "expected token COLON but got NEWLINE"
+        assert exc.token.lineno == 1
         exc = pytest.raises(PgenError, self.gram_for, "hi+").value
-        assert str(exc) == "expected ':' but got '+'"
-        assert exc.location == ((1, 2), (1, 3), "hi+\n")
+        assert str(exc) == "expected token COLON but got PLUS"
+        assert exc.token.lineno == 1
 
     def test_comments_and_whitespace(self):
         self.gram_for("\n\n# comment\nrule: NAME # comment")

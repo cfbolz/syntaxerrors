@@ -5,17 +5,16 @@ Inspired by Guido van Rossum's pgen2.
 """
 
 import StringIO
-import tokenize
-import token
-
-from syntaxerrors import parser
+from syntaxerrors import pytokenizer
+from syntaxerrors import parser, pytoken
+from syntaxerrors.pytoken import tokens
 
 
 class PgenError(Exception):
 
-    def __init__(self, msg, location=None):
+    def __init__(self, msg, token=None):
         Exception.__init__(self, msg)
-        self.location = location
+        self.token = token
 
 
 class NFA(object):
@@ -120,8 +119,8 @@ class ParserGenerator(object):
     def __init__(self, grammar_source):
         self.start_symbol = None
         self.dfas = {}
-        stream = StringIO.StringIO(grammar_source)
-        self.token_stream = tokenize.generate_tokens(stream.readline)
+        self.tokens = pytokenizer.generate_tokens(grammar_source.splitlines(True) + [b"\n"], 0)
+        self.token_stream = iter(self.tokens)
         self.parse()
         self.first = {}
         self.add_first_sets()
@@ -250,37 +249,39 @@ class ParserGenerator(object):
 
     def expect(self, token_type, value=None):
         if token_type != self.type:
-            expected = token.tok_name[token_type]
-            got = token.tok_name[self.type]
+            expected = pytoken.tok_name[token_type]
+            got = pytoken.tok_name[self.type]
             raise PgenError("expected token %s but got %s" % (expected, got),
-                            self.location)
+                            self.token)
         current_value = self.value
         if value is not None:
             if value != current_value:
                 msg = "expected %r but got %r" % (value, current_value)
-                raise PgenError(msg,self.location)
+                raise PgenError(msg,self.token)
         self.advance_token()
         return current_value
 
-    def test_token(self, token_type, value):
-        if self.type == token_type and self.value == value:
+    def test_token(self, token_type):
+        if self.type == token_type:
             return True
         return False
 
     def advance_token(self):
         data = self.token_stream.next()
         # Ignore comments and non-logical newlines.
-        while data[0] in (tokenize.NL, tokenize.COMMENT):
+        while data.token_type in (tokens.NL, tokens.COMMENT):
             data = self.token_stream.next()
-        self.type, self.value = data[:2]
-        self.location = data[2:]
+        self.type, self.value = data.token_type, data.value
+        self.token = data
 
     def parse(self):
         self.advance_token()
-        while self.type != token.ENDMARKER:
+        while True:
             # Skip over whitespace.
-            while self.type == token.NEWLINE:
+            while self.type == tokens.NEWLINE:
                 self.advance_token()
+            if self.type == tokens.ENDMARKER:
+                break
             name, start_state, end_state = self.parse_rule()
             dfa = nfa_to_dfa(start_state, end_state)
             simplify_dfa(dfa)
@@ -290,22 +291,22 @@ class ParserGenerator(object):
 
     def parse_rule(self):
         # RULE: NAME ':' ALTERNATIVES
-        name = self.expect(token.NAME)
-        self.expect(token.OP, ":")
+        name = self.expect(tokens.NAME)
+        self.expect(tokens.COLON)
         start_state, end_state = self.parse_alternatives()
-        self.expect(token.NEWLINE)
+        self.expect(tokens.NEWLINE)
         return name, start_state, end_state
 
     def parse_alternatives(self):
         # ALTERNATIVES: ITEMS ('|' ITEMS)*
         first_state, end_state = self.parse_items()
-        if self.test_token(token.OP, "|"):
+        if self.test_token(tokens.VBAR):
             # Link all alternatives into a enclosing set of states.
             enclosing_start_state = NFA()
             enclosing_end_state = NFA()
             enclosing_start_state.arc(first_state)
             end_state.arc(enclosing_end_state)
-            while self.test_token(token.OP, "|"):
+            while self.test_token(tokens.VBAR):
                 self.advance_token()
                 sub_start_state, sub_end_state = self.parse_items()
                 enclosing_start_state.arc(sub_start_state)
@@ -317,9 +318,9 @@ class ParserGenerator(object):
     def parse_items(self):
         # ITEMS: ITEM+
         first_state, end_state = self.parse_item()
-        while self.type in (token.STRING, token.NAME) or \
-                           self.test_token(token.OP, "(") or \
-                           self.test_token(token.OP, "["):
+        while self.type in (tokens.STRING, tokens.NAME) or \
+                           self.test_token(tokens.LPAR) or \
+                           self.test_token(tokens.LSQB):
             sub_first_state, new_end_state = self.parse_item()
             end_state.arc(sub_first_state)
             end_state = new_end_state
@@ -327,17 +328,17 @@ class ParserGenerator(object):
 
     def parse_item(self):
         # ITEM: '[' ALTERNATIVES ']' | ATOM ['+' | '*']
-        if self.test_token(token.OP, "["):
+        if self.test_token(tokens.LSQB):
             self.advance_token()
             start_state, end_state = self.parse_alternatives()
-            self.expect(token.OP, "]")
+            self.expect(tokens.RSQB)
             # Bypass the rule if this is optional.
             start_state.arc(end_state)
             return start_state, end_state
         else:
             atom_state, next_state = self.parse_atom()
             # Check for a repeater.
-            if self.type == token.OP and self.value in ("+", "*"):
+            if self.type in (tokens.PLUS, tokens.STAR):
                 next_state.arc(atom_state)
                 repeat = self.value
                 self.advance_token()
@@ -352,18 +353,18 @@ class ParserGenerator(object):
 
     def parse_atom(self):
         # ATOM: '(' ALTERNATIVES ')' | NAME | STRING
-        if self.test_token(token.OP, "("):
+        if self.test_token(tokens.LPAR):
             self.advance_token()
             rule = self.parse_alternatives()
-            self.expect(token.OP, ")")
+            self.expect(tokens.RPAR)
             return rule
-        elif self.type in (token.NAME, token.STRING):
+        elif self.type in (tokens.NAME, tokens.STRING):
             atom_state = NFA()
             next_state = NFA()
             atom_state.arc(next_state, self.value)
             self.advance_token()
             return atom_state, next_state
         else:
-            invalid = token.tok_name[self.type]
+            invalid = pytoken.tok_name[self.type]
             raise PgenError("unexpected token: %s" % (invalid,),
-                            self.location)
+                            self.token)
