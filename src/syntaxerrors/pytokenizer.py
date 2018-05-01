@@ -1,3 +1,5 @@
+import six
+
 from syntaxerrors import automata
 from syntaxerrors.parser import Token
 from syntaxerrors.pytoken import python_opmap
@@ -7,11 +9,15 @@ from syntaxerrors.pytokenize import tabsize, whiteSpaceDFA, \
     triple_quoted, endDFAs, single_quoted, pseudoDFA
 from syntaxerrors import astconsts
 
-NAMECHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'
-NUMCHARS = '0123456789'
+NAMECHARS = b'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'
+NUMCHARS = b'0123456789'
 ALNUMCHARS = NAMECHARS + NUMCHARS
-EXTENDED_ALNUMCHARS = ALNUMCHARS + '-.'
-WHITESPACES = ' \t\n\r\v\f'
+EXTENDED_ALNUMCHARS = ALNUMCHARS + b'-.'
+WHITESPACES = b' \t\n\r\v\f'
+
+def indexbyte(b, pos):
+    assert isinstance(b, bytes)
+    return six.int2byte(six.indexbytes(b, pos))
 
 def match_encoding_declaration(comment):
     """returns the declared encoding or None
@@ -88,11 +94,13 @@ def generate_tokens(lines, flags):
     # make the annotator happy
     line = ''
     pos = 0
-    lines.append("")
+    lines.append(b"")
     strstart = (0, 0, "")
     for line in lines:
+        assert isinstance(line, bytes)
         lnum = lnum + 1
         line = universal_newline(line)
+        assert isinstance(line, bytes)
         pos, max = 0, len(line)
 
         if contstr:
@@ -128,14 +136,14 @@ def generate_tokens(lines, flags):
             if not line: break
             column = 0
             while pos < max:                   # measure leading whitespace
-                if line[pos] == ' ': column = column + 1
-                elif line[pos] == '\t': column = (column/tabsize + 1)*tabsize
-                elif line[pos] == '\f': column = 0
+                if indexbyte(line, pos) == ' ': column = column + 1
+                elif indexbyte(line, pos) == '\t': column = (column/tabsize + 1)*tabsize
+                elif indexbyte(line, pos) == '\f': column = 0
                 else: break
                 pos = pos + 1
             if pos == max: break
 
-            if line[pos] in '#\r\n':
+            if indexbyte(line, pos) in b'#\r\n':
                 # skip comments or blank lines
                 continue
 
@@ -145,7 +153,7 @@ def generate_tokens(lines, flags):
                 last_comment = ''
             while column < indents[-1]:
                 indents.pop()
-                token_list.append(Token(tokens.DEDENT, '', lnum, pos, line))
+                token_list.append(Token(tokens.DEDENT, b'', lnum, pos, line))
                 last_comment = ''
             if column != indents[-1]:
                 err = "unindent does not match any outer indentation level"
@@ -175,17 +183,17 @@ def generate_tokens(lines, flags):
                                      lnum, start + 1, token_list)
 
                 pos = end
-                token, initial = line[start:end], line[start]
+                token, initial = line[start:end], indexbyte(line, start)
                 if initial in numchars or \
                    (initial == '.' and token != '.'):      # ordinary number
                     token_list.append(Token(tokens.NUMBER, token, lnum, start, line))
                     last_comment = ''
-                elif initial in '\r\n':
+                elif initial in b'\r\n':
                     if not parenstack:
                         tok = Token(tokens.NEWLINE, last_comment, lnum, start, line)
                         token_list.append(tok)
                     last_comment = ''
-                elif initial == '#':
+                elif initial == b'#':
                     # skip comment
                     last_comment = token
                 elif token in triple_quoted:
@@ -219,21 +227,21 @@ def generate_tokens(lines, flags):
                 elif initial in namechars:                 # ordinary name
                     token_list.append(Token(tokens.NAME, token, lnum, start, line))
                     last_comment = ''
-                elif initial == '\\':                      # continued stmt
+                elif initial == b'\\':                      # continued stmt
                     continued = 1
                 else:
-                    if initial in '([{':
+                    if initial in b'([{':
                         parenstack.append((initial, lnum, start, line))
-                    elif initial in ')]}':
+                    elif initial in b')]}':
                         if not parenstack:
-                            raise TokenError("unmatched '%s'" % initial, line,
+                            raise TokenError("unmatched '%s'" % initial.decode("utf-8"), line,
                                              lnum, start + 1, token_list)
                         opening, lnum1, start1, line1 = parenstack.pop()
-                        if not ((opening == "(" and initial == ")") or
-                                (opening == "[" and initial == "]") or
-                                (opening == "{" and initial == "}")):
+                        if not ((opening == b"(" and initial == b")") or
+                                (opening == b"[" and initial == b"]") or
+                                (opening == b"{" and initial == b"}")):
                             msg = "closing parenthesis '%s' does not match opening parenthesis '%s'" % (
-                                        initial, opening)
+                                        initial.decode("utf-8"), opening.decode("utf-8"))
 
                             if lnum1 != lnum:
                                 msg += " on line " + str(lnum1)
@@ -249,10 +257,10 @@ def generate_tokens(lines, flags):
                 start = whiteSpaceDFA.recognize(line, pos)
                 if start < 0:
                     start = pos
-                if start<max and line[start] in single_quoted:
+                if start<max and indexbyte(line, start) in single_quoted:
                     raise TokenError("end of line (EOL) while scanning string literal",
                              line, lnum, start+1, token_list)
-                tok = Token(tokens.ERRORTOKEN, line[pos], lnum, pos, line)
+                tok = Token(tokens.ERRORTOKEN, indexbyte(line, pos), lnum, pos, line)
                 token_list.append(tok)
                 last_comment = ''
                 pos = pos + 1
@@ -260,14 +268,14 @@ def generate_tokens(lines, flags):
     lnum -= 1
     if not (flags & astconsts.PyCF_DONT_IMPLY_DEDENT):
         if token_list and token_list[-1].token_type != tokens.NEWLINE:
-            tok = Token(tokens.NEWLINE, '', lnum, 0, '\n')
+            tok = Token(tokens.NEWLINE, b'', lnum, 0, b'\n')
             token_list.append(tok)
         for indent in indents[1:]:                # pop remaining indent levels
-            token_list.append(Token(tokens.DEDENT, '', lnum, pos, line))
-    tok = Token(tokens.NEWLINE, '', lnum, 0, '\n')
+            token_list.append(Token(tokens.DEDENT, b'', lnum, pos, line))
+    tok = Token(tokens.NEWLINE, b'', lnum, 0, b'\n')
     token_list.append(tok)
 
-    token_list.append(Token(tokens.ENDMARKER, '', lnum, pos, line))
+    token_list.append(Token(tokens.ENDMARKER, b'', lnum, pos, line))
     return token_list
 
 

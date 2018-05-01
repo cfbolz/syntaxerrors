@@ -117,10 +117,12 @@ class DFA(object):
 class Token(object):
     def __init__(self, token_type, value, lineno, column, line):
         self.token_type = token_type
+        assert isinstance(value, bytes)
         self.value = value
         self.lineno = lineno
         # 0-based offset
         self.column = column
+        assert isinstance(line, bytes)
         self.line = line
         # label_index in the grammar, computed later
         self.label_index = -1
