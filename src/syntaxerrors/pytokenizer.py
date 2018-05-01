@@ -86,7 +86,7 @@ def generate_tokens(lines, flags):
     contstr, needcont = '', 0
     contline = None
     indents = [0]
-    last_comment = ''
+    last_comment = b''
     parenstack = []
 
     # make the annotator happy
@@ -115,7 +115,7 @@ def generate_tokens(lines, flags):
                 tok = Token(tokens.STRING, contstr + line[:end], strstart[0],
                        strstart[1], line)
                 token_list.append(tok)
-                last_comment = ''
+                last_comment = b''
                 contstr, needcont = '', 0
                 contline = None
             elif (needcont and not line.endswith('\\\n') and
@@ -123,7 +123,7 @@ def generate_tokens(lines, flags):
                 tok = Token(tokens.ERRORTOKEN, contstr + line, strstart[0],
                        strstart[1], line)
                 token_list.append(tok)
-                last_comment = ''
+                last_comment = b''
                 contstr = ''
                 contline = None
                 continue
@@ -150,11 +150,11 @@ def generate_tokens(lines, flags):
             if column > indents[-1]:           # count indents or dedents
                 indents.append(column)
                 token_list.append(Token(tokens.INDENT, line[:pos], lnum, 0, line))
-                last_comment = ''
+                last_comment = b''
             while column < indents[-1]:
                 indents.pop()
                 token_list.append(Token(tokens.DEDENT, b'', lnum, pos, line))
-                last_comment = ''
+                last_comment = b''
             if column != indents[-1]:
                 err = "unindent does not match any outer indentation level"
                 raise TokenIndentationError(err, line, lnum, column+1, token_list)
@@ -187,12 +187,12 @@ def generate_tokens(lines, flags):
                 if initial in numchars or \
                    (initial == '.' and token != '.'):      # ordinary number
                     token_list.append(Token(tokens.NUMBER, token, lnum, start, line))
-                    last_comment = ''
+                    last_comment = b''
                 elif initial in b'\r\n':
                     if not parenstack:
                         tok = Token(tokens.NEWLINE, last_comment, lnum, start, line)
                         token_list.append(tok)
-                    last_comment = ''
+                    last_comment = b''
                 elif initial == b'#':
                     # skip comment
                     last_comment = token
@@ -204,7 +204,7 @@ def generate_tokens(lines, flags):
                         token = line[start:pos]
                         tok = Token(tokens.STRING, token, lnum, start, line)
                         token_list.append(tok)
-                        last_comment = ''
+                        last_comment = b''
                     else:
                         strstart = (lnum, start, line)
                         contstr = line[start:]
@@ -223,10 +223,10 @@ def generate_tokens(lines, flags):
                     else:                                  # ordinary string
                         tok = Token(tokens.STRING, token, lnum, start, line)
                         token_list.append(tok)
-                        last_comment = ''
+                        last_comment = b''
                 elif initial in namechars:                 # ordinary name
                     token_list.append(Token(tokens.NAME, token, lnum, start, line))
-                    last_comment = ''
+                    last_comment = b''
                 elif initial == b'\\':                      # continued stmt
                     continued = 1
                 else:
@@ -252,7 +252,7 @@ def generate_tokens(lines, flags):
                     else:
                         punct = tokens.OP
                     token_list.append(Token(punct, token, lnum, start, line))
-                    last_comment = ''
+                    last_comment = b''
             else:
                 start = whiteSpaceDFA.recognize(line, pos)
                 if start < 0:
@@ -262,7 +262,7 @@ def generate_tokens(lines, flags):
                              line, lnum, start+1, token_list)
                 tok = Token(tokens.ERRORTOKEN, indexbyte(line, pos), lnum, pos, line)
                 token_list.append(tok)
-                last_comment = ''
+                last_comment = b''
                 pos = pos + 1
 
     lnum -= 1
