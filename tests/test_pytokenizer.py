@@ -21,14 +21,15 @@ class TestTokenizer(object):
 
     def test_simple(self):
         line = b"a+1"
+        uniline = u"a+1"
         tks = tokenize(line)
         assert tks == [
-            Token(tokens.NAME, b'a', 1, 0, line),
-            Token(tokens.PLUS, b'+', 1, 1, line),
-            Token(tokens.NUMBER, b'1', 1, 2, line),
-            Token(tokens.NEWLINE, b'', 2, 0, b'\n'),
-            Token(tokens.NEWLINE, b'', 2, 0, b'\n'),
-            Token(tokens.ENDMARKER, b'', 2, 0, b''),
+            Token(tokens.NAME, u'a', 1, 0, uniline),
+            Token(tokens.PLUS, u'+', 1, 1, uniline),
+            Token(tokens.NUMBER, u'1', 1, 2, uniline),
+            Token(tokens.NEWLINE, u'', 2, 0, u'\n'),
+            Token(tokens.NEWLINE, u'', 2, 0, u'\n'),
+            Token(tokens.ENDMARKER, u'', 2, 0, u''),
             ]
 
     def test_error_parenthesis(self):

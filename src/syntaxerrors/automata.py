@@ -25,7 +25,7 @@ DEFAULT = object()
 import six
 
 ERROR_STATE_INT = 255
-ERROR_STATE = chr(ERROR_STATE_INT)
+ERROR_STATE = six.int2byte(ERROR_STATE_INT)
 
 class DFA:
     # ____________________________________________________________
@@ -38,7 +38,7 @@ class DFA:
         maximum = 0
         for state in states:
             for key in state:
-                assert isinstance(key, six.text_type) or key is DEFAULT
+                assert isinstance(key, bytes) or key is DEFAULT
                 if key == DEFAULT:
                     continue
                 maximum = max(ord(key), maximum)
@@ -48,7 +48,7 @@ class DFA:
         for i, state in enumerate(states):
             default = ERROR_STATE
             if DEFAULT in state:
-                default = chr(state[DEFAULT])
+                default = six.int2byte(state[DEFAULT])
             defaults.append(default)
             string_state = [default] * self.max_char
             for key, value in state.items():
@@ -56,10 +56,10 @@ class DFA:
                     continue
                 assert len(key) == 1
                 assert ord(key) < self.max_char
-                string_state[ord(key)] = chr(value)
+                string_state[ord(key)] = six.int2byte(value)
             string_states.extend(string_state)
-        self.states = "".join(string_states)
-        self.defaults = "".join(defaults)
+        self.states = b"".join(string_states)
+        self.defaults = b"".join(defaults)
         self.accepts = accepts
         self.start = start
 
@@ -67,16 +67,16 @@ class DFA:
 
     def _next_state(self, item, crntState):
         if item >= self.max_char:
-            return ord(self.defaults[crntState])
+            return six.indexbytes(self.defaults, crntState)
         else:
-            return ord(self.states[crntState * self.max_char + item])
+            return six.indexbytes(self.states, crntState * self.max_char + item)
 
     def recognize(self, inVec, pos = 0):
         crntState = self.start
         lastAccept = False
         i = pos
         for i in range(pos, len(inVec)):
-            item = ord(inVec[i])
+            item = six.indexbytes(inVec, i)
             accept = self.accepts[crntState]
             crntState = self._next_state(item, crntState)
             if crntState != ERROR_STATE_INT:
@@ -106,7 +106,7 @@ class NonGreedyDFA (DFA):
         crntState = self.start
         i = pos
         for i in range(pos, len(inVec)):
-            item = ord(inVec[i])
+            item = six.indexbytes(inVec, i)
             accept = self.accepts[crntState]
             if accept:
                 return i
