@@ -16,9 +16,8 @@ def test_char_set():
 class SimpleParser(parser.Parser):
 
     def parse(self, input):
-        input = input.encode("ascii")
         self.prepare()
-        tokens = pytokenizer.generate_tokens(input.splitlines(True) + [b"\n"], 0)
+        tokens = pytokenizer.generate_tokens(input.splitlines(True), 0)
         self.add_tokens(tokens)
         return self.root
 
@@ -51,12 +50,12 @@ def tree_from_string(expected, gram):
         if data[0].isupper():
             tp = getattr(token, data[0])
             if len(data) == 2:
-                value = data[1].strip("\"")
+                value = data[1].strip(u"\"")
             elif tp == token.NEWLINE:
-                value = "\n"
+                value = u"\n"
             else:
-                value = ""
-            n = parser.Terminal(gram, parser.Token(tp, value.encode("ascii"), 0, 0, b''))
+                value = u""
+            n = parser.Terminal(gram, parser.Token(tp, value, 0, 0, u''))
         else:
             tp = gram.symbol_ids[data[0]]
             n = parser.Nonterminal(gram, tp)
@@ -82,16 +81,16 @@ class TestParser:
     def parser_for(self, gram, add_endmarker=True):
         assert isinstance(gram, bytes)
         if add_endmarker:
-            gram += b" NEWLINE ENDMARKER\n"
+            gram += b" NEWLINE+ ENDMARKER\n"
         pgen = metaparser.ParserGenerator(gram)
         g = pgen.build_grammar(MyGrammar)
         return SimpleParser(g), g
 
     def test_multiple_rules(self):
-        gram = b"""foo: 'next_rule' bar 'end' NEWLINE ENDMARKER
+        gram = b"""foo: 'next_rule' bar 'end' NEWLINE+ ENDMARKER
 bar: NAME NUMBER\n"""
         p, gram = self.parser_for(gram, False)
-        expected = """
+        expected = u"""
         foo
             NAME "next_rule"
             bar
@@ -99,15 +98,16 @@ bar: NAME NUMBER\n"""
                 NUMBER "42"
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        input = "next_rule a_name 42 end"
+        input = b"next_rule a_name 42 end"
         assert tree_from_string(expected, gram) == p.parse(input)
 
     def test_recursive_rule(self):
-        gram = b"""foo: NAME bar STRING NEWLINE ENDMARKER
+        gram = b"""foo: NAME bar STRING NEWLINE+ ENDMARKER
 bar: NAME [bar] NUMBER\n"""
         p, gram = self.parser_for(gram, False)
-        expected = """
+        expected = u"""
         foo
             NAME "hi"
             bar
@@ -118,17 +118,18 @@ bar: NAME [bar] NUMBER\n"""
                 NUMBER "42"
             STRING "'string'"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        input = "hi hello a_name 32 42 'string'"
+        input = b"hi hello a_name 32 42 'string'"
         assert tree_from_string(expected, gram) == p.parse(input)
 
     def test_symbol(self):
-        gram = b"""parent: first_child second_child NEWLINE ENDMARKER
+        gram = b"""parent: first_child second_child NEWLINE+ ENDMARKER
 first_child: NAME age
 second_child: STRING
 age: NUMBER\n"""
         p, gram = self.parser_for(gram, False)
-        expected = """
+        expected = u"""
         parent
             first_child
                 NAME "harry"
@@ -137,173 +138,191 @@ age: NUMBER\n"""
             second_child
                 STRING "'fred'"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        input = "harry 13 'fred'"
+        input = b"harry 13 'fred'"
         assert tree_from_string(expected, gram) == p.parse(input)
 
     def test_token(self):
         p, gram = self.parser_for(b"foo: NAME")
-        expected = """
+        expected = u"""
         foo
            NAME "hi"
            NEWLINE
+           NEWLINE
            ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("hi")
-        pytest.raises(parser.ParseError, p.parse, "567")
+        assert tree_from_string(expected, gram) == p.parse(b"hi")
+        pytest.raises(parser.ParseError, p.parse, b"567")
         p, gram = self.parser_for(b"foo: NUMBER NAME STRING")
-        expected = """
+        expected = u"""
         foo
-           NUMBER "42"
-           NAME "hi"
-           STRING "'bar'"
-           NEWLINE
-           ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("42 hi 'bar'")
+            NUMBER "42"
+            NAME "hi"
+            STRING "'bar'"
+            NEWLINE
+            NEWLINE
+            ENDMARKER"""
+        assert tree_from_string(expected, gram) == p.parse(b"42 hi 'bar'")
 
     def test_optional(self):
         p, gram = self.parser_for(b"foo: [NAME] 'end'")
-        expected = """
+        expected = u"""
         foo
             NAME "hi"
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("hi end")
-        expected = """
+        assert tree_from_string(expected, gram) == p.parse(b"hi end")
+        expected = u"""
         foo
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("end")
+        assert tree_from_string(expected, gram) == p.parse(b"end")
 
     def test_grouping(self):
         p, gram = self.parser_for(
             b"foo: ((NUMBER NAME | STRING) | 'second_option')")
-        expected = """
+        expected = u"""
         foo
             NUMBER "42"
             NAME "hi"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("42 hi")
-        expected = """
+        assert tree_from_string(expected, gram) == p.parse(b"42 hi")
+        expected = u"""
         foo
             STRING "'hi'"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("'hi'")
-        expected = """
+        assert tree_from_string(expected, gram) == p.parse(b"'hi'")
+        expected = u"""
         foo
             NAME "second_option"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("second_option")
-        pytest.raises(parser.ParseError, p.parse, "42 a_name 'hi'")
-        pytest.raises(parser.ParseError, p.parse, "42 second_option")
+        assert tree_from_string(expected, gram) == p.parse(b"second_option")
+        pytest.raises(parser.ParseError, p.parse, b"42 a_name 'hi'")
+        pytest.raises(parser.ParseError, p.parse, b"42 second_option")
 
     def test_alternative(self):
         p, gram = self.parser_for(b"foo: (NAME | NUMBER)")
-        expected = """
+        expected = u"""
         foo
             NAME "hi"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("hi")
-        expected = """
+        assert tree_from_string(expected, gram) == p.parse(b"hi")
+        expected = u"""
         foo
             NUMBER "42"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("42")
-        pytest.raises(parser.ParseError, p.parse, "hi 23")
-        pytest.raises(parser.ParseError, p.parse, "23 hi")
-        pytest.raises(parser.ParseError, p.parse, "'some string'")
+        assert tree_from_string(expected, gram) == p.parse(b"42")
+        pytest.raises(parser.ParseError, p.parse, b"hi 23")
+        pytest.raises(parser.ParseError, p.parse, b"23 hi")
+        pytest.raises(parser.ParseError, p.parse, b"'some string'")
 
     def test_keyword(self):
         p, gram = self.parser_for(b"foo: 'key'")
-        expected = """
+        expected = u"""
         foo
             NAME "key"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("key")
-        pytest.raises(parser.ParseError, p.parse, "")
+        assert tree_from_string(expected, gram) == p.parse(b"key")
+        pytest.raises(parser.ParseError, p.parse, b"")
         p, gram = self.parser_for(b"foo: NAME 'key'")
-        expected = """
+        expected = u"""
         foo
             NAME "some_name"
             NAME "key"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("some_name key")
-        pytest.raises(parser.ParseError, p.parse, "some_name")
+        assert tree_from_string(expected, gram) == p.parse(b"some_name key")
+        pytest.raises(parser.ParseError, p.parse, b"some_name")
 
     def test_repeaters(self):
         p, gram = self.parser_for(b"foo: NAME+ 'end'")
-        expected = """
+        expected = u"""
         foo
             NAME "hi"
             NAME "bye"
             NAME "nothing"
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("hi bye nothing end")
-        pytest.raises(parser.ParseError, p.parse, "end")
-        pytest.raises(parser.ParseError, p.parse, "hi bye")
-        p, gram = self.parser_for("foo: NAME* 'end'")
-        expected = """
+        assert tree_from_string(expected, gram) == p.parse(b"hi bye nothing end")
+        pytest.raises(parser.ParseError, p.parse, b"end")
+        pytest.raises(parser.ParseError, p.parse, b"hi bye")
+        p, gram = self.parser_for(b"foo: NAME* 'end'")
+        expected = u"""
         foo
             NAME "hi"
             NAME "bye"
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("hi bye end")
-        pytest.raises(parser.ParseError, p.parse, "hi bye")
-        expected = """
+        assert tree_from_string(expected, gram) == p.parse(b"hi bye end")
+        pytest.raises(parser.ParseError, p.parse, b"hi bye")
+        expected = u"""
         foo
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("end")
+        assert tree_from_string(expected, gram) == p.parse(b"end")
 
-        p, gram = self.parser_for("foo: (NAME | NUMBER)+ 'end'")
-        expected = """
+        p, gram = self.parser_for(b"foo: (NAME | NUMBER)+ 'end'")
+        expected = u"""
         foo
             NAME "a_name"
             NAME "name_two"
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("a_name name_two end")
-        expected = """
+        assert tree_from_string(expected, gram) == p.parse(b"a_name name_two end")
+        expected = u"""
         foo
             NUMBER "42"
             NAME "name"
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("42 name end")
-        pytest.raises(parser.ParseError, p.parse, "end")
-        p, gram = self.parser_for("foo: (NAME | NUMBER)* 'end'")
-        expected = """
+        assert tree_from_string(expected, gram) == p.parse(b"42 name end")
+        pytest.raises(parser.ParseError, p.parse, b"end")
+        p, gram = self.parser_for(b"foo: (NAME | NUMBER)* 'end'")
+        expected = u"""
         foo
             NAME "hi"
             NUMBER 42
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        assert tree_from_string(expected, gram) == p.parse("hi 42 end")
+        assert tree_from_string(expected, gram) == p.parse(b"hi 42 end")
 
 
     def test_optimized_terminal(self):
-        gram = b"""foo: bar baz 'end' NEWLINE ENDMARKER
+        gram = b"""foo: bar baz 'end' NEWLINE+ ENDMARKER
 bar: NAME
 baz: NUMBER
 """
         p, gram = self.parser_for(gram, False)
-        expected = """
+        expected = u"""
         foo
             bar
                 NAME "a_name"
@@ -311,8 +330,9 @@ baz: NUMBER
                 NUMBER "42"
             NAME "end"
             NEWLINE
+            NEWLINE
             ENDMARKER"""
-        input = "a_name 42 end"
+        input = b"a_name 42 end"
         tree = p.parse(input)
         assert tree_from_string(expected, gram) == tree
         assert isinstance(tree, parser.Nonterminal)
@@ -324,21 +344,8 @@ baz: NUMBER
         p, gram = self.parser_for(
             b"foo: 'if' NUMBER '+' NUMBER"
         )
-        info = pytest.raises(parser.ParseError, p.parse, "if 42")
+        info = pytest.raises(parser.ParseError, p.parse, b"if 42")
         info.value.expected_str is None
-        info = pytest.raises(parser.ParseError, p.parse, "if 42 42")
+        info = pytest.raises(parser.ParseError, p.parse, b"if 42 42")
         info.value.expected_str == '+'
-
-    def test_usual_example(self):
-        # not a real test, just for playing around
-        gram = b"""\
-assign: NAME '=' sum NEWLINE ENDMARKER
-sum: product '+' sum | product
-product: value '*' product | value
-value: '(' sum ')' | simple
-simple: NUMBER | NAME
-"""
-        p, gram = self.parser_for(gram, False)
-        input = "a = b + c * 2"
-        p.parse(input)
 

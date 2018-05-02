@@ -276,11 +276,11 @@ def generate_tokens(lines, flags):
     lnum -= 1
     if not (flags & astconsts.PyCF_DONT_IMPLY_DEDENT):
         if token_list and token_list[-1].token_type != tokens.NEWLINE:
-            tok = token_decode(tokens.NEWLINE, b'', lnum, 0, u'\n')
+            tok = token_decode(tokens.NEWLINE, b'\n', lnum, 0, u'\n')
             token_list.append(tok)
         for indent in indents[1:]:                # pop remaining indent levels
             token_list.append(token_decode(tokens.DEDENT, b'', lnum, pos, uni_line))
-    tok = token_decode(tokens.NEWLINE, b'', lnum, 0, u'\n')
+    tok = token_decode(tokens.NEWLINE, b'\n', lnum, 0, u'\n')
     token_list.append(tok)
 
     token_list.append(token_decode(tokens.ENDMARKER, b'', lnum, pos, uni_line))
