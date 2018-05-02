@@ -1,3 +1,4 @@
+from __future__ import print_function
 from collections import deque
 
 from syntaxerrors import parser
@@ -100,10 +101,10 @@ def try_recover(grammar, stack, tokens, index):
                 if attempts > ATTEMPTS_LIMIT:
                     break
                 if attempts % 10000 == 0:
-                    print attempts, len(newqueue)
+                    print(attempts, len(newqueue))
                 if repair.parses_successfully(tokens, grammar, endindex):
                     assert repair.name
-                    print '=====', unexplored, attempts, repair.name, repair
+                    print('=====', unexplored, attempts, repair.name, repair)
                     return tokens, repair.index, repair.stack
                 newqueue.append(repair)
         queue = newqueue
