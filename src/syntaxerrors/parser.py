@@ -2,6 +2,7 @@
 A CPython inspired RPython parser.
 """
 
+import six
 
 SHIFT = "SHIFT"
 REDUCE = "REDUCE"
@@ -75,14 +76,14 @@ class Grammar(object):
             if tp in self.never_generate_as_fake:
                 continue
             if tp == self.KEYWORD_TOKEN:
-                keyword = "keyword"
+                keyword = b"keyword"
                 while keyword in self.keyword_ids:
-                    keyword += "_"
+                    keyword += b"_"
                 l.append((tp, keyword))
                 for value in self.keyword_ids:
                     l.append((tp, value))
             else:
-                l.append((tp, "fake"))
+                l.append((tp, b"fake"))
         # heuristic: reverse to make fake tokens appear early
         self._repair_fake_tokens = l[::-1]
         return l
@@ -98,7 +99,7 @@ class DFA(object):
     def could_match_token(self, label_index):
         pos = label_index >> 3
         bit = 1 << (label_index & 0b111)
-        return bool(ord(self.first[label_index >> 3]) & bit)
+        return bool(six.indexbytes(self.first, label_index >> 3) & bit)
 
     @staticmethod
     def _first_to_string(first):
@@ -108,7 +109,7 @@ class DFA(object):
             pos = label_index >> 3
             bit = 1 << (label_index & 0b111)
             b[pos] |= bit
-        return str(b)
+        return bytes(b)
 
     def __repr__(self):
         return "<DFA %s>" % (self.grammar.symbol_names[self.symbol_id], )
@@ -117,12 +118,12 @@ class DFA(object):
 class Token(object):
     def __init__(self, token_type, value, lineno, column, line):
         self.token_type = token_type
-        assert isinstance(value, bytes)
+        assert isinstance(value, six.text_type)
         self.value = value
         self.lineno = lineno
         # 0-based offset
         self.column = column
-        assert isinstance(line, bytes)
+        assert isinstance(line, six.text_type)
         self.line = line
         # label_index in the grammar, computed later
         self.label_index = -1
@@ -427,6 +428,7 @@ class Parser(object):
             try:
                 stack = add_token(stack, grammar, token, label_index)
             except ParseError as e:
+                raise
                 errors.append(e)
                 tokens, i, stack = try_recover(grammar, stack, tokens, i)
                 if i == -1:

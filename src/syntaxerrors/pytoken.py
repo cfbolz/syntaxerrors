@@ -2,6 +2,7 @@
 
 python_tokens = {}
 python_opmap = {}
+python_opmap_bytes = {}
 
 tok_name = [None] * 256
 
@@ -11,70 +12,71 @@ def _add_tok(name, *values):
     python_tokens[name] = index
     for value in values:
         python_opmap[value] = index
+        python_opmap_bytes[value.encode("ascii")] = index
 
-_add_tok('ENDMARKER')
-_add_tok('NAME')
-_add_tok('NUMBER')
-_add_tok('STRING')
-_add_tok('NEWLINE')
-_add_tok('INDENT')
-_add_tok('DEDENT')
-_add_tok('LPAR', b"(")
-_add_tok('RPAR', b")")
-_add_tok('LSQB', b"[")
-_add_tok('RSQB', b"]")
-_add_tok('COLON', b":")
-_add_tok('COMMA',  b"," )
-_add_tok('SEMI', b";" )
-_add_tok('PLUS', b"+" )
-_add_tok('MINUS', b"-" )
-_add_tok('STAR', b"*" )
-_add_tok('SLASH', b"/" )
-_add_tok('VBAR', b"|" )
-_add_tok('AMPER', b"&" )
-_add_tok('LESS', b"<" )
-_add_tok('GREATER', b">" )
-_add_tok('EQUAL', b"=" )
-_add_tok('DOT', b"." )
-_add_tok('PERCENT', b"%" )
-_add_tok('BACKQUOTE', b"`" )
-_add_tok('LBRACE', b"{" )
-_add_tok('RBRACE', b"}" )
-_add_tok('EQEQUAL', b"==" )
-_add_tok('NOTEQUAL', b"!=", b"<>" )
-_add_tok('LESSEQUAL', b"<=" )
-_add_tok('GREATEREQUAL', b">=" )
-_add_tok('TILDE', b"~" )
-_add_tok('CIRCUMFLEX', b"^" )
-_add_tok('LEFTSHIFT', b"<<" )
-_add_tok('RIGHTSHIFT', b">>" )
-_add_tok('DOUBLESTAR', b"**" )
-_add_tok('PLUSEQUAL', b"+=" )
-_add_tok('MINEQUAL', b"-=" )
-_add_tok('STAREQUAL', b"*=" )
-_add_tok('SLASHEQUAL', b"/=" )
-_add_tok('PERCENTEQUAL', b"%=" )
-_add_tok('AMPEREQUAL', b"&=" )
-_add_tok('VBAREQUAL', b"|=" )
-_add_tok('CIRCUMFLEXEQUAL', b"^=" )
-_add_tok('LEFTSHIFTEQUAL', b"<<=" )
-_add_tok('RIGHTSHIFTEQUAL', b">>=" )
-_add_tok('DOUBLESTAREQUAL', b"**=" )
-_add_tok('DOUBLESLASH', b"//" )
-_add_tok('DOUBLESLASHEQUAL', b"//=" )
-_add_tok('AT', b"@" )
-_add_tok('OP')
-_add_tok('ERRORTOKEN')
+_add_tok(u'ENDMARKER')
+_add_tok(u'NAME')
+_add_tok(u'NUMBER')
+_add_tok(u'STRING')
+_add_tok(u'NEWLINE')
+_add_tok(u'INDENT')
+_add_tok(u'DEDENT')
+_add_tok(u'LPAR', u"(")
+_add_tok(u'RPAR', u")")
+_add_tok(u'LSQB', u"[")
+_add_tok(u'RSQB', u"]")
+_add_tok(u'COLON', u":")
+_add_tok(u'COMMA',  u"," )
+_add_tok(u'SEMI', u";" )
+_add_tok(u'PLUS', u"+" )
+_add_tok(u'MINUS', u"-" )
+_add_tok(u'STAR', u"*" )
+_add_tok(u'SLASH', u"/" )
+_add_tok(u'VBAR', u"|" )
+_add_tok(u'AMPER', u"&" )
+_add_tok(u'LESS', u"<" )
+_add_tok(u'GREATER', u">" )
+_add_tok(u'EQUAL', u"=" )
+_add_tok(u'DOT', u"." )
+_add_tok(u'PERCENT', u"%" )
+_add_tok(u'BACKQUOTE', u"`" )
+_add_tok(u'LBRACE', u"{" )
+_add_tok(u'RBRACE', u"}" )
+_add_tok(u'EQEQUAL', u"==" )
+_add_tok(u'NOTEQUAL', u"!=", u"<>" )
+_add_tok(u'LESSEQUAL', u"<=" )
+_add_tok(u'GREATEREQUAL', u">=" )
+_add_tok(u'TILDE', u"~" )
+_add_tok(u'CIRCUMFLEX', u"^" )
+_add_tok(u'LEFTSHIFT', u"<<" )
+_add_tok(u'RIGHTSHIFT', u">>" )
+_add_tok(u'DOUBLESTAR', u"**" )
+_add_tok(u'PLUSEQUAL', u"+=" )
+_add_tok(u'MINEQUAL', u"-=" )
+_add_tok(u'STAREQUAL', u"*=" )
+_add_tok(u'SLASHEQUAL', u"/=" )
+_add_tok(u'PERCENTEQUAL', u"%=" )
+_add_tok(u'AMPEREQUAL', u"&=" )
+_add_tok(u'VBAREQUAL', u"|=" )
+_add_tok(u'CIRCUMFLEXEQUAL', u"^=" )
+_add_tok(u'LEFTSHIFTEQUAL', u"<<=" )
+_add_tok(u'RIGHTSHIFTEQUAL', u">>=" )
+_add_tok(u'DOUBLESTAREQUAL', u"**=" )
+_add_tok(u'DOUBLESLASH', u"//" )
+_add_tok(u'DOUBLESLASHEQUAL', u"//=" )
+_add_tok(u'AT', u"@" )
+_add_tok(u'OP')
+_add_tok(u'ERRORTOKEN')
 
 # extra PyPy-specific tokens
-_add_tok("COMMENT")
-_add_tok("NL")
+_add_tok(u"COMMENT")
+_add_tok(u"NL")
 
 # extra recovery-specific tokens
 # those are never produced by the tokenizer, but the recovery algorithm can
 # insert it
-_add_tok("FAKESUITESTART") # behaves like: if 1: NEWLINE
-_add_tok("FAKESUITE") # behaves like: INDENT pass DEDENT
+_add_tok(u"FAKESUITESTART") # behaves like: if 1: NEWLINE
+_add_tok(u"FAKESUITE") # behaves like: INDENT pass DEDENT
 
 del _add_tok
 

@@ -4,8 +4,6 @@ Makes a parser from a grammar source.
 Inspired by Guido van Rossum's pgen2.
 """
 
-import six
-
 from syntaxerrors import pytokenizer
 from syntaxerrors import parser, pytoken
 from syntaxerrors.pytoken import tokens
@@ -24,7 +22,6 @@ class NFA(object):
         self.arcs = []
 
     def arc(self, to_state, label=None):
-        assert label is None or isinstance(label, six.text_type)
         self.arcs.append((label, to_state))
 
     def find_unlabeled_states(self, into):
@@ -183,7 +180,7 @@ class ParserGenerator(object):
                     return label_index
             else:
                 # Probably a rule without a definition.
-                raise PgenError("no such rule: %r" % (label,))
+                raise PgenError(u"no such rule: %s" % (label,))
         else:
             # A keyword or operator.
             value = label.strip("\"'")
@@ -196,9 +193,9 @@ class ParserGenerator(object):
                     result = label_index
             else:
                 try:
-                    token_index = gram.OPERATOR_MAP[value.encode("utf-8")]
+                    token_index = gram.OPERATOR_MAP[value]
                 except KeyError:
-                    raise PgenError("no such operator: %r" % (value,))
+                    raise PgenError(u"no such operator: %s" % (value,))
                 if token_index in gram.token_ids:
                     return gram.token_ids[token_index]
                 else:
@@ -269,13 +266,11 @@ class ParserGenerator(object):
         return False
 
     def advance_token(self):
-        data = self.token_stream.__next__()
+        data = next(self.token_stream)
         # Ignore comments and non-logical newlines.
         while data.token_type in (tokens.NL, tokens.COMMENT):
-            data = self.token_stream.__next__()
-        self.type = data.token_type
-        self.value = data.value
-        self.value_unicode = data.value.decode("utf-8")
+            data = next(self.token_stream)
+        self.type, self.value = data.token_type, data.value
         self.token = data
 
     def parse(self):
@@ -299,7 +294,7 @@ class ParserGenerator(object):
         self.expect(tokens.COLON)
         start_state, end_state = self.parse_alternatives()
         self.expect(tokens.NEWLINE)
-        return name.decode("utf-8"), start_state, end_state
+        return name, start_state, end_state
 
     def parse_alternatives(self):
         # ALTERNATIVES: ITEMS ('|' ITEMS)*
@@ -346,7 +341,7 @@ class ParserGenerator(object):
                 next_state.arc(atom_state)
                 repeat = self.value
                 self.advance_token()
-                if repeat == b"*":
+                if repeat == "*":
                     # Optionally repeated
                     return atom_state, atom_state
                 else:
@@ -365,7 +360,7 @@ class ParserGenerator(object):
         elif self.type in (tokens.NAME, tokens.STRING):
             atom_state = NFA()
             next_state = NFA()
-            atom_state.arc(next_state, self.value_unicode)
+            atom_state.arc(next_state, self.value)
             self.advance_token()
             return atom_state, next_state
         else:

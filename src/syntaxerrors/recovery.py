@@ -68,7 +68,7 @@ class Repair(object):
         # insert token
         if self.name.count("i") < NUMBER_INSERTS:
             for tp, value in grammar.repair_fake_tokens():
-                token = parser.Token(tp, value, -1, -1, "fake line")
+                token = parser.Token(tp, value, -1, -1, b"fake line")
                 label_index = grammar.classify(token)
                 try:
                     stack = parser.add_token(self.stack, grammar, token, label_index)

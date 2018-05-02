@@ -1,3 +1,5 @@
+import six
+
 import pytest
 import os
 import glob
@@ -10,12 +12,12 @@ from syntaxerrors import parser, pytoken
 class MyGrammar(parser.Grammar):
     TOKENS = dict(pytoken.tokens.__class__.__dict__)
     OPERATOR_MAP = {
-        b"+" : token.OP,
-        b"-" : token.OP,
-        b"*" : token.OP,
-        b"(" : token.OP,
-        b")" : token.OP,
-        b"=" : token.OP,
+        "+" : token.OP,
+        "-" : token.OP,
+        "*" : token.OP,
+        "(" : token.OP,
+        ")" : token.OP,
+        "=" : token.OP,
         }
     KEYWORD_TOKEN = token.NAME
 
@@ -86,7 +88,7 @@ class TestParserGenerator:
         assert len(g.token_ids) == 2
 
         exc = pytest.raises(PgenError, self.gram_for, b"add: '/'").value
-        assert str(exc) == "no such operator: '/'"
+        assert str(exc) == "no such operator: /"
 
     def test_symbol(self):
         g = self.gram_for(b"foo: some_other_rule\nsome_other_rule: NAME")
@@ -94,7 +96,7 @@ class TestParserGenerator:
         assert len(g.labels) == 3
 
         exc = pytest.raises(PgenError, self.gram_for, b"foo: no_rule").value
-        assert str(exc) == "no such rule: 'no_rule'"
+        assert str(exc) == "no such rule: no_rule"
 
     def test_repeaters(self):
         g1 = self.gram_for(b"foo: NAME+")

@@ -2,8 +2,7 @@
 import pytest
 import tokenize
 import token
-import StringIO
-from syntaxerrors import parser, metaparser, pygram
+from syntaxerrors import parser, metaparser, pygram, pytokenizer
 
 from tests.test_metaparser import MyGrammar
 
@@ -17,10 +16,10 @@ def test_char_set():
 class SimpleParser(parser.Parser):
 
     def parse(self, input):
+        input = input.encode("ascii")
         self.prepare()
-        rl = StringIO.StringIO(input + "\n").readline
-        gen = tokenize.generate_tokens(rl)
-        self.add_tokens([parser.Token(*stuff) for stuff in gen])
+        tokens = pytokenizer.generate_tokens(input.splitlines(True) + [b"\n"], 0)
+        self.add_tokens(tokens)
         return self.root
 
 
@@ -57,7 +56,7 @@ def tree_from_string(expected, gram):
                 value = "\n"
             else:
                 value = ""
-            n = parser.Terminal(gram, parser.Token(tp, value, 0, 0, ''))
+            n = parser.Terminal(gram, parser.Token(tp, value.encode("ascii"), 0, 0, b''))
         else:
             tp = gram.symbol_ids[data[0]]
             n = parser.Nonterminal(gram, tp)
@@ -81,14 +80,15 @@ def tree_from_string(expected, gram):
 class TestParser:
 
     def parser_for(self, gram, add_endmarker=True):
+        assert isinstance(gram, bytes)
         if add_endmarker:
-            gram += " NEWLINE ENDMARKER\n"
+            gram += b" NEWLINE ENDMARKER\n"
         pgen = metaparser.ParserGenerator(gram)
         g = pgen.build_grammar(MyGrammar)
         return SimpleParser(g), g
 
     def test_multiple_rules(self):
-        gram = """foo: 'next_rule' bar 'end' NEWLINE ENDMARKER
+        gram = b"""foo: 'next_rule' bar 'end' NEWLINE ENDMARKER
 bar: NAME NUMBER\n"""
         p, gram = self.parser_for(gram, False)
         expected = """
@@ -104,7 +104,7 @@ bar: NAME NUMBER\n"""
         assert tree_from_string(expected, gram) == p.parse(input)
 
     def test_recursive_rule(self):
-        gram = """foo: NAME bar STRING NEWLINE ENDMARKER
+        gram = b"""foo: NAME bar STRING NEWLINE ENDMARKER
 bar: NAME [bar] NUMBER\n"""
         p, gram = self.parser_for(gram, False)
         expected = """
@@ -123,7 +123,7 @@ bar: NAME [bar] NUMBER\n"""
         assert tree_from_string(expected, gram) == p.parse(input)
 
     def test_symbol(self):
-        gram = """parent: first_child second_child NEWLINE ENDMARKER
+        gram = b"""parent: first_child second_child NEWLINE ENDMARKER
 first_child: NAME age
 second_child: STRING
 age: NUMBER\n"""
@@ -142,7 +142,7 @@ age: NUMBER\n"""
         assert tree_from_string(expected, gram) == p.parse(input)
 
     def test_token(self):
-        p, gram = self.parser_for("foo: NAME")
+        p, gram = self.parser_for(b"foo: NAME")
         expected = """
         foo
            NAME "hi"
@@ -150,7 +150,7 @@ age: NUMBER\n"""
            ENDMARKER"""
         assert tree_from_string(expected, gram) == p.parse("hi")
         pytest.raises(parser.ParseError, p.parse, "567")
-        p, gram = self.parser_for("foo: NUMBER NAME STRING")
+        p, gram = self.parser_for(b"foo: NUMBER NAME STRING")
         expected = """
         foo
            NUMBER "42"
@@ -161,7 +161,7 @@ age: NUMBER\n"""
         assert tree_from_string(expected, gram) == p.parse("42 hi 'bar'")
 
     def test_optional(self):
-        p, gram = self.parser_for("foo: [NAME] 'end'")
+        p, gram = self.parser_for(b"foo: [NAME] 'end'")
         expected = """
         foo
             NAME "hi"
@@ -178,7 +178,7 @@ age: NUMBER\n"""
 
     def test_grouping(self):
         p, gram = self.parser_for(
-            "foo: ((NUMBER NAME | STRING) | 'second_option')")
+            b"foo: ((NUMBER NAME | STRING) | 'second_option')")
         expected = """
         foo
             NUMBER "42"
@@ -202,7 +202,7 @@ age: NUMBER\n"""
         pytest.raises(parser.ParseError, p.parse, "42 second_option")
 
     def test_alternative(self):
-        p, gram = self.parser_for("foo: (NAME | NUMBER)")
+        p, gram = self.parser_for(b"foo: (NAME | NUMBER)")
         expected = """
         foo
             NAME "hi"
@@ -220,7 +220,7 @@ age: NUMBER\n"""
         pytest.raises(parser.ParseError, p.parse, "'some string'")
 
     def test_keyword(self):
-        p, gram = self.parser_for("foo: 'key'")
+        p, gram = self.parser_for(b"foo: 'key'")
         expected = """
         foo
             NAME "key"
@@ -228,7 +228,7 @@ age: NUMBER\n"""
             ENDMARKER"""
         assert tree_from_string(expected, gram) == p.parse("key")
         pytest.raises(parser.ParseError, p.parse, "")
-        p, gram = self.parser_for("foo: NAME 'key'")
+        p, gram = self.parser_for(b"foo: NAME 'key'")
         expected = """
         foo
             NAME "some_name"
@@ -239,7 +239,7 @@ age: NUMBER\n"""
         pytest.raises(parser.ParseError, p.parse, "some_name")
 
     def test_repeaters(self):
-        p, gram = self.parser_for("foo: NAME+ 'end'")
+        p, gram = self.parser_for(b"foo: NAME+ 'end'")
         expected = """
         foo
             NAME "hi"
@@ -298,7 +298,7 @@ age: NUMBER\n"""
 
 
     def test_optimized_terminal(self):
-        gram = """foo: bar baz 'end' NEWLINE ENDMARKER
+        gram = b"""foo: bar baz 'end' NEWLINE ENDMARKER
 bar: NAME
 baz: NUMBER
 """
@@ -322,7 +322,7 @@ baz: NUMBER
 
     def test_error_string(self):
         p, gram = self.parser_for(
-            "foo: 'if' NUMBER '+' NUMBER"
+            b"foo: 'if' NUMBER '+' NUMBER"
         )
         info = pytest.raises(parser.ParseError, p.parse, "if 42")
         info.value.expected_str is None
@@ -331,7 +331,7 @@ baz: NUMBER
 
     def test_usual_example(self):
         # not a real test, just for playing around
-        gram = """\
+        gram = b"""\
 assign: NAME '=' sum NEWLINE ENDMARKER
 sum: product '+' sum | product
 product: value '*' product | value

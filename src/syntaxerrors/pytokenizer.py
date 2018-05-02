@@ -2,7 +2,7 @@ import six
 
 from syntaxerrors import automata
 from syntaxerrors.parser import Token
-from syntaxerrors.pytoken import python_opmap
+from syntaxerrors.pytoken import python_opmap_bytes
 from syntaxerrors.pytoken import tokens
 from syntaxerrors.error import TokenError, TokenIndentationError
 from syntaxerrors.pytokenize import tabsize, whiteSpaceDFA, \
@@ -255,8 +255,8 @@ def generate_tokens(lines, flags):
                                 msg += " on line " + str(lnum1)
                             raise TokenError(
                                     msg, line, lnum, start + 1, token_list)
-                    if token in python_opmap:
-                        punct = python_opmap[token]
+                    if token in python_opmap_bytes:
+                        punct = python_opmap_bytes[token]
                     else:
                         punct = tokens.OP
                     token_list.append(token_decode(punct, token, lnum, start, uni_line))
