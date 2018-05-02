@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 
 import pytest
@@ -9,7 +10,7 @@ def test_find_four_errors():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 if a
     print 2
 
@@ -63,7 +64,7 @@ def test_further_examples():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 def f(a, e.expected):
     bla
 
@@ -104,7 +105,7 @@ def test_missing_pass():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 if x:
     # nothing
 else:
@@ -119,13 +120,13 @@ if a
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 9]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 def test_lambda_with_newlines():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 lambda x:
     x + 1
 
@@ -138,14 +139,14 @@ if a
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 7]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 
 def test_missing_comma_list():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 [1,
 2
 3,
@@ -165,13 +166,13 @@ if a
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [4, 14]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 def test_genexp_keywordarg():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 dict(a = i for i in range(10))
 print 1
 if a
@@ -180,14 +181,14 @@ if a
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 4]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 
 def test_genexp_tuple():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 (a, b for a, b in zip([1, 2], [3, 4]))
 print 1
 if a
@@ -196,14 +197,14 @@ if a
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 4]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 
 def test_missing_newline():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 if 1: def some_complicated_function(w, ith, many, tokens):
         if a:
             print 2
@@ -216,13 +217,13 @@ if x
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 8]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 def test_extra_dot():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 if 1:
     if errors:
         self.root = None
@@ -237,14 +238,14 @@ if x
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [5, 10]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 def Xtest_indent_broken():
 
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 try:
     stack = add_token(stack, grammar, token, label_index)
 except ParseError as e:
@@ -264,7 +265,7 @@ if x
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [5, 10]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 
 
@@ -272,7 +273,7 @@ def Xtest_random_newline():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 try:
     1/0
 exc
@@ -289,13 +290,13 @@ if x
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [5, 10]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 def test_random_comment():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 def add_tokens(self, tokens):
     from #yntaxerrors.recovery import try_recover
     grammar = self.grammar
@@ -309,13 +310,13 @@ if x
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [3, 9]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))
 
 def test_need_to_fix_earlier():
     info = pyparse.CompileInfo("<string>", "exec")
     p = pyparse.PythonParser()
     try:
-        st = p.parse_source("""
+        st = p.parse_source(b"""
 de% blub(self, tokens):
     grammar = self.grammar
     stack = StackEntry(None, grammar.dfas[self.start - 256], 0)
@@ -328,4 +329,4 @@ if x
     except MultipleSyntaxErrors as e:
         assert len(e.errors) == 2
         assert [x.lineno for x in e.errors] == [2, 8]
-        print pyparse.format_messages(e)
+        print(pyparse.format_messages(e))

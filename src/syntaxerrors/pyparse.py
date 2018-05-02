@@ -30,13 +30,13 @@ def _normalize_encoding(encoding):
     return encoding
 
 def _check_for_encoding(s):
-    eol = s.find('\n')
+    eol = s.find(b'\n')
     if eol < 0:
         return _check_line_for_encoding(s)[0]
     enc, again = _check_line_for_encoding(s[:eol])
     if enc or not again:
         return enc
-    eol2 = s.find('\n', eol + 1)
+    eol2 = s.find(b'\n', eol + 1)
     if eol2 < 0:
         return _check_line_for_encoding(s[eol + 1:])[0]
     return _check_line_for_encoding(s[eol + 1:eol2])[0]
@@ -48,7 +48,7 @@ def _check_line_for_encoding(line):
     for i in range(len(line)):
         if line[i] == '#':
             break
-        if line[i] not in ' \t\014':
+        if pytokenizer.indexbyte(line, i) not in b' \t\014':
             return None, False  # Not a comment, don't read the second line.
     return pytokenizer.match_encoding_declaration(line[i:]), True
 
@@ -97,7 +97,7 @@ class PythonParser(parser.Parser):
         """
         # Detect source encoding.
         enc = None
-        if textsrc.startswith("\xEF\xBB\xBF"):
+        if textsrc.startswith(b"\xEF\xBB\xBF"):
             textsrc = textsrc[3:]
             enc = 'utf-8'
             # If an encoding is explicitly given check that it is utf-8.
@@ -139,9 +139,9 @@ class PythonParser(parser.Parser):
 
         # The tokenizer is very picky about how it wants its input.
         source_lines = textsrc.splitlines(True)
-        if source_lines and not source_lines[-1].endswith("\n"):
-            source_lines[-1] += '\n'
-        if textsrc and textsrc[-1] == "\n":
+        if source_lines and not source_lines[-1].endswith(b"\n"):
+            source_lines[-1] += b'\n'
+        if textsrc and textsrc[-1] == b"\n":
             flags &= ~astconsts.PyCF_DONT_IMPLY_DEDENT
 
         self.prepare(_targets[compile_info.mode])

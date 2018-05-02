@@ -26,7 +26,7 @@ def match_encoding_declaration(comment):
     >>> py_encoding = re.compile(r"coding[:=]\s*([-\w.]+)")
     >>> py_encoding.search(comment)
     """
-    index = comment.find('coding')
+    index = comment.find(b'coding')
     if index < 0:
         return None
     next_char = comment[index + 6]

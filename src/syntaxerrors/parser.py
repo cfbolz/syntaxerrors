@@ -76,14 +76,14 @@ class Grammar(object):
             if tp in self.never_generate_as_fake:
                 continue
             if tp == self.KEYWORD_TOKEN:
-                keyword = b"keyword"
+                keyword = u"keyword"
                 while keyword in self.keyword_ids:
-                    keyword += b"_"
+                    keyword += u"_"
                 l.append((tp, keyword))
                 for value in self.keyword_ids:
                     l.append((tp, value))
             else:
-                l.append((tp, b"fake"))
+                l.append((tp, u"fake"))
         # heuristic: reverse to make fake tokens appear early
         self._repair_fake_tokens = l[::-1]
         return l
@@ -428,7 +428,6 @@ class Parser(object):
             try:
                 stack = add_token(stack, grammar, token, label_index)
             except ParseError as e:
-                raise
                 errors.append(e)
                 tokens, i, stack = try_recover(grammar, stack, tokens, i)
                 if i == -1:
