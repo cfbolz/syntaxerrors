@@ -27,8 +27,8 @@ class TestTokenizer(object):
             Token(tokens.NAME, u'a', 1, 0, uniline),
             Token(tokens.PLUS, u'+', 1, 1, uniline),
             Token(tokens.NUMBER, u'1', 1, 2, uniline),
-            Token(tokens.NEWLINE, u'', 2, 0, u'\n'),
-            Token(tokens.NEWLINE, u'', 2, 0, u'\n'),
+            Token(tokens.NEWLINE, u'\n', 2, 0, u'\n'),
+            Token(tokens.NEWLINE, u'\n', 2, 0, u'\n'),
             Token(tokens.ENDMARKER, u'', 2, 0, u''),
             ]
 
