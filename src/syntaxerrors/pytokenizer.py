@@ -126,8 +126,8 @@ def generate_tokens(lines, flags):
                 last_comment = b''
                 contstr, needcont = '', 0
                 contline = None
-            elif (needcont and not line.endswith('\\\n') and
-                               not line.endswith('\\\r\n')):
+            elif (needcont and not line.endswith(b'\\\n') and
+                               not line.endswith(b'\\\r\n')):
                 tok = token_decode(tokens.ERRORTOKEN, contstr + line, strstart[0],
                        strstart[1], uni_line)
                 token_list.append(tok)
@@ -144,9 +144,9 @@ def generate_tokens(lines, flags):
             if not line: break
             column = 0
             while pos < max:                   # measure leading whitespace
-                if indexbyte(line, pos) == ' ': column = column + 1
-                elif indexbyte(line, pos) == '\t': column = (column/tabsize + 1)*tabsize
-                elif indexbyte(line, pos) == '\f': column = 0
+                if indexbyte(line, pos) == b' ': column = column + 1
+                elif indexbyte(line, pos) == b'\t': column = (column/tabsize + 1)*tabsize
+                elif indexbyte(line, pos) == b'\f': column = 0
                 else: break
                 pos = pos + 1
             if pos == max: break
@@ -193,7 +193,7 @@ def generate_tokens(lines, flags):
                 pos = end
                 token, initial = line[start:end], indexbyte(line, start)
                 if initial in numchars or \
-                   (initial == '.' and token != '.'):      # ordinary number
+                   (initial == b'.' and token != b'.'):      # ordinary number
                     token_list.append(token_decode(tokens.NUMBER, token, lnum, start, uni_line))
                     last_comment = b''
                 elif initial in b'\r\n':
@@ -221,7 +221,7 @@ def generate_tokens(lines, flags):
                 elif initial in single_quoted or \
                     token[:2] in single_quoted or \
                     token[:3] in single_quoted:
-                    if token[-1] == '\n':                  # continued string
+                    if indexbyte(token, -1) == b'\n':                  # continued string
                         strstart = (lnum, start, line)
                         endDFA = (endDFAs[initial] or endDFAs[token[1]] or
                                    endDFAs[token[2]])
@@ -290,9 +290,9 @@ def generate_tokens(lines, flags):
 def universal_newline(line):
     # show annotator that indexes below are non-negative
     line_len_m2 = len(line) - 2
-    if line_len_m2 >= 0 and line[-2] == '\r' and line[-1] == '\n':
-        return line[:line_len_m2] + '\n'
+    if line_len_m2 >= 0 and line[-2] == b'\r' and line[-1] == b'\n':
+        return line[:line_len_m2] + b'\n'
     line_len_m1 = len(line) - 1
-    if line_len_m1 >= 0 and line[-1] == '\r':
-        return line[:line_len_m1] + '\n'
+    if line_len_m1 >= 0 and line[-1] == b'\r':
+        return line[:line_len_m1] + b'\n'
     return line

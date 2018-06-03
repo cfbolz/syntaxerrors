@@ -32,6 +32,26 @@ class TestTokenizer(object):
             Token(tokens.ENDMARKER, u'', 2, 0, u''),
             ]
 
+    def test_bug_python3(self):
+        line = b"   \\\n  \t\\\nfrom __future__ import with_statement\n"
+        tks = tokenize(line)
+        line1 = u'   \\\n'
+        line2 = u'from __future__ import with_statement\n'
+        line3 = u''
+        line4 = u'\n'
+        assert tks == [
+            Token(tokens.INDENT, u'   ', 1, 0, line1),
+            Token(tokens.NAME, u'from', 3, 0, line2),
+            Token(tokens.NAME, u'__future__', 3, 5, line2),
+            Token(tokens.NAME, u'import', 3, 16, line2),
+            Token(tokens.NAME, u'with_statement', 3, 23, line2),
+            Token(tokens.NEWLINE, u'', 3, 37, line2),
+            Token(tokens.DEDENT, u'', 4, 0, line3),
+            Token(tokens.NEWLINE, u'\n', 4, 0, line4),
+            Token(tokens.ENDMARKER, u'', 4, 0, line3)
+        ]
+
+
     def test_error_parenthesis(self):
         for paren in u"([{":
             check_token_error(paren.encode("utf-8") + b"1 + 2",
