@@ -1,5 +1,5 @@
 from syntaxerrors.automata import DFA, DEFAULT
-from syntaxerrors.genpytokenize import output
+from syntaxerrors.gendfa import output
 
 def test_states():
     states = [{b"\x00": 1}, {b"\x01": 0}]

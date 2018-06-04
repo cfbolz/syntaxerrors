@@ -11,7 +11,7 @@ FILELIST = [
     "pytokenize.py",
     "pytoken.py",
     "automata.py",
-    "genpytokenize.py",
+    "gendfa.py",
     "pylexer.py",
     "metaparser.py",
     "parser.py",
