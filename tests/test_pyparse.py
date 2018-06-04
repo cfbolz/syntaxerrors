@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import py
+import six
 from syntaxerrors import pyparse
 from syntaxerrors.pygram import syms, tokens
 from syntaxerrors.error import SyntaxError, IndentationError
@@ -12,6 +13,8 @@ class TestPythonParser:
         self.parser = pyparse.PythonParser()
 
     def parse(self, source, mode="exec", info=None):
+        if not isinstance(source, bytes):
+            source = source.encode("utf-8")
         if info is None:
             info = pyparse.CompileInfo("<test>", mode)
         return self.parser.parse_source(source, info)
@@ -42,21 +45,21 @@ stuff = "nothing"
         input = (u"# coding: utf-7\nstuff = %s" % (sentence,)).encode("utf-7")
         tree = self.parse(input, info=info)
         assert info.encoding == "utf-7"
-        input = "# coding: iso-8859-15\nx"
+        input = b"# coding: iso-8859-15\nx"
         self.parse(input, info=info)
         assert info.encoding == "iso-8859-15"
-        input = "\xEF\xBB\xBF# coding: utf-8\nx"
+        input = b"\xEF\xBB\xBF# coding: utf-8\nx"
         self.parse(input, info=info)
         assert info.encoding == "utf-8"
-        input = "# coding: utf-8\nx"
+        input = b"# coding: utf-8\nx"
         info.flags |= consts.PyCF_SOURCE_IS_UTF8
         exc = py.test.raises(SyntaxError, self.parse, input, info=info).value
         info.flags &= ~consts.PyCF_SOURCE_IS_UTF8
         assert exc.msg == "coding declaration in unicode string"
-        input = "\xEF\xBB\xBF# coding: latin-1\nx"
+        input = b"\xEF\xBB\xBF# coding: latin-1\nx"
         exc = py.test.raises(SyntaxError, self.parse, input).value
         assert exc.msg == "UTF-8 BOM with latin-1 coding cookie"
-        input = "# coding: not-here"
+        input = b"# coding: not-here"
         exc = py.test.raises(SyntaxError, self.parse, input).value
         assert exc.msg == "Unknown encoding: not-here"
         input = u"# coding: ascii\n\xe2".encode('utf-8')
@@ -69,7 +72,10 @@ stuff = "nothing"
 # coding: string-escape
 \x70\x72\x69\x6e\x74\x20\x32\x2b\x32\x0a
 """).value
-        assert exc.msg == "codec did not return a unicode object"
+        if six.PY2:
+            assert exc.msg == "codec did not return a unicode object"
+        else:
+            assert exc.msg == "Unknown encoding: string-escape"
 
     def test_syntax_error(self):
         parse = self.parse

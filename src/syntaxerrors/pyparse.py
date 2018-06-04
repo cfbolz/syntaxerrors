@@ -1,9 +1,10 @@
 from syntaxerrors import parsefuture, parser, pytokenizer, pygram, error
 from syntaxerrors import astconsts
+from syntaxerrors.pytokenizer import indexbyte
 
-def recode_to_utf8(bytes, encoding):
-    text = bytes.decode(encoding)
-    if not isinstance(text, unicode):
+def recode_to_utf8(b, encoding):
+    text = b.decode(encoding)
+    if isinstance(text, bytes):
         raise error.SyntaxError("codec did not return a unicode object")
     recoded = text.encode("utf-8")
     return recoded
@@ -20,14 +21,14 @@ def _normalize_encoding(encoding):
     if encoding is None:
         return None
     # lower() + '_' / '-' conversion
-    encoding = encoding.replace('_', '-').lower()
-    if encoding == 'utf-8' or encoding.startswith('utf-8-'):
+    encoding = encoding.replace(b'_', b'-').lower()
+    if encoding == b'utf-8' or encoding.startswith(b'utf-8-'):
         return 'utf-8'
-    for variant in ['latin-1', 'iso-latin-1', 'iso-8859-1']:
+    for variant in [b'latin-1', b'iso-latin-1', b'iso-8859-1']:
         if (encoding == variant or
-            encoding.startswith(variant + '-')):
+            encoding.startswith(variant + b'-')):
             return 'iso-8859-1'
-    return encoding
+    return encoding.decode("ascii")
 
 def _check_for_encoding(s):
     eol = s.find(b'\n')
@@ -46,9 +47,9 @@ def _check_line_for_encoding(line):
     """returns the declared encoding or None"""
     i = 0
     for i in range(len(line)):
-        if line[i] == '#':
+        if indexbyte(line, i) == b'#':
             break
-        if pytokenizer.indexbyte(line, i) not in b' \t\014':
+        if indexbyte(line, i) not in b' \t\014':
             return None, False  # Not a comment, don't read the second line.
     return pytokenizer.match_encoding_declaration(line[i:]), True
 
@@ -102,8 +103,8 @@ class PythonParser(parser.Parser):
             enc = 'utf-8'
             # If an encoding is explicitly given check that it is utf-8.
             decl_enc = _check_for_encoding(textsrc)
-            if decl_enc and decl_enc != "utf-8":
-                raise error.SyntaxError("UTF-8 BOM with %s coding cookie" % decl_enc,
+            if decl_enc and decl_enc != b"utf-8":
+                raise error.SyntaxError("UTF-8 BOM with %s coding cookie" % decl_enc.decode("utf-8"),
                                         filename=compile_info.filename)
         elif compile_info.flags & astconsts.PyCF_SOURCE_IS_UTF8:
             enc = 'utf-8'
@@ -141,7 +142,7 @@ class PythonParser(parser.Parser):
         source_lines = textsrc.splitlines(True)
         if source_lines and not source_lines[-1].endswith(b"\n"):
             source_lines[-1] += b'\n'
-        if textsrc and textsrc[-1] == b"\n":
+        if textsrc and pytokenizer.indexbyte(textsrc, -1) == b"\n":
             flags &= ~astconsts.PyCF_DONT_IMPLY_DEDENT
 
         self.prepare(_targets[compile_info.mode])

@@ -19,6 +19,7 @@ def indexbyte(b, pos):
     assert isinstance(b, bytes)
     return six.int2byte(six.indexbytes(b, pos))
 
+
 def match_encoding_declaration(comment):
     """returns the declared encoding or None
 
@@ -29,24 +30,26 @@ def match_encoding_declaration(comment):
     index = comment.find(b'coding')
     if index < 0:
         return None
-    next_char = comment[index + 6]
-    if next_char not in ':=':
+    next_char = indexbyte(comment, index + 6)
+    if next_char not in b':=':
         return None
     end_of_decl = comment[index + 7:]
     index = 0
-    for char in end_of_decl:
+    for i in range(len(end_of_decl)):
+        char = indexbyte(end_of_decl, i)
         if char not in WHITESPACES:
             break
         index += 1
     else:
         return None
-    encoding = ''
-    for char in end_of_decl[index:]:
+    encoding = b''
+    for i in range(index, len(end_of_decl)):
+        char = indexbyte(end_of_decl, i)
         if char in EXTENDED_ALNUMCHARS:
             encoding += char
         else:
             break
-    if encoding != '':
+    if encoding != b'':
         return encoding
     return None
 
@@ -223,8 +226,8 @@ def generate_tokens(lines, flags):
                     token[:3] in single_quoted:
                     if indexbyte(token, -1) == b'\n':                  # continued string
                         strstart = (lnum, start, line)
-                        endDFA = (endDFAs[initial] or endDFAs[token[1]] or
-                                   endDFAs[token[2]])
+                        endDFA = (endDFAs[initial] or endDFAs[indexbyte(token, 1)] or
+                                   endDFAs[indexbyte(token, 2)])
                         contstr, needcont = line[start:], 1
                         contline = line
                         break
@@ -290,9 +293,9 @@ def generate_tokens(lines, flags):
 def universal_newline(line):
     # show annotator that indexes below are non-negative
     line_len_m2 = len(line) - 2
-    if line_len_m2 >= 0 and line[-2] == b'\r' and line[-1] == b'\n':
+    if line_len_m2 >= 0 and indexbyte(line, -2) == b'\r' and indexbyte(line, -1) == b'\n':
         return line[:line_len_m2] + b'\n'
     line_len_m1 = len(line) - 1
-    if line_len_m1 >= 0 and line[-1] == b'\r':
+    if line_len_m1 >= 0 and indexbyte(line, -1) == b'\r':
         return line[:line_len_m1] + b'\n'
     return line
