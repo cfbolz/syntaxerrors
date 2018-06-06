@@ -4,7 +4,7 @@ from syntaxerrors.gendfa import output
 def test_states():
     states = [{b"\x00": 1}, {b"\x01": 0}]
     d = DFA(states[:], [False, True])
-    assert output('test', DFA, d, states) == """\
+    assert output('test', "DFA", d, states) == """\
 accepts = [False, True]
 states = [
     # 0

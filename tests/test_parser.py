@@ -55,7 +55,7 @@ def tree_from_string(expected, gram):
                 value = u"\n"
             else:
                 value = u""
-            n = parser.Terminal(gram, parser.Token(tp, value, 0, 0, u''))
+            n = parser.Terminal(gram, tp, value, 0, 0)
         else:
             tp = gram.symbol_ids[data[0]]
             n = parser.Nonterminal(gram, tp)

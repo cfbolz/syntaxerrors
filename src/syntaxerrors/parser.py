@@ -199,15 +199,19 @@ class Node(object):
 class Terminal(Node):
     __slots__ = ("value", "lineno", "column")
     def __init__(self, grammar, type, value, lineno, column):
-        Node.__init__(self, type)
+        Node.__init__(self, grammar, type)
         self.value = value
         self.lineno = lineno
         self.column = column
 
     @staticmethod
-    def fromtoken(token):
+    def fromtoken(grammar, token):
         return Terminal(
-            token.token_type, token.value, token.lineno, token.column)
+            grammar,
+            token.token_type,
+            token.value,
+            token.lineno,
+            token.column)
 
     def __repr__(self):
         return "Terminal(type=%s, value=%r)" % (self.type, self.value)
@@ -369,7 +373,7 @@ class StackEntry(object):
 
     def shift(self, grammar, next_state, token):
         """shift a non-terminal and prepare for the next state."""
-        new_node = Terminal(grammar, token)
+        new_node = Terminal.fromtoken(grammar, token)
         self = self.node_append_child(new_node)
         return self.switch_state(next_state)
 
