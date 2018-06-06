@@ -18,6 +18,7 @@ FILELIST = [
     "parser.py",
     "pyparse.py",
     "pytokenizer.py",
+    "data/Grammar2.7",
 ]
 
 TESTLIST = [
