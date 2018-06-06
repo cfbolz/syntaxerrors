@@ -45,6 +45,7 @@ class Grammar(object):
         new.symbol_ids = self.symbol_ids
         new.symbols_names = self.symbol_names
         new.keyword_ids = self.keyword_ids
+        new.token_to_error_string = self.token_to_error_string
         new.dfas = self.dfas
         new.labels = self.labels
         new.token_ids = self.token_ids
@@ -197,11 +198,16 @@ class Node(object):
 
 class Terminal(Node):
     __slots__ = ("value", "lineno", "column")
-    def __init__(self, grammar, token):
-        Node.__init__(self, grammar, token.token_type)
-        self.value = token.value
-        self.lineno = token.lineno
-        self.column = token.column
+    def __init__(self, grammar, type, value, lineno, column):
+        Node.__init__(self, type)
+        self.value = value
+        self.lineno = lineno
+        self.column = column
+
+    @staticmethod
+    def fromtoken(token):
+        return Terminal(
+            token.token_type, token.value, token.lineno, token.column)
 
     def __repr__(self):
         return "Terminal(type=%s, value=%r)" % (self.type, self.value)

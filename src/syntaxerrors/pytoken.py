@@ -71,6 +71,7 @@ _add_tok(u'ERRORTOKEN')
 # extra PyPy-specific tokens
 _add_tok(u"COMMENT")
 _add_tok(u"NL")
+_add_tok(u"REVDBMETAVAR", u"$NUM")
 
 # extra recovery-specific tokens
 # those are never produced by the tokenizer, but the recovery algorithm can
