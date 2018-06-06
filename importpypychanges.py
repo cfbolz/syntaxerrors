@@ -12,6 +12,7 @@ FILELIST = [
     "pytoken.py",
     "automata.py",
     "gendfa.py",
+    "dfa_generated.py",
     "pylexer.py",
     "metaparser.py",
     "parser.py",
